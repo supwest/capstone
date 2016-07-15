@@ -56,6 +56,10 @@ def get_song_data():
     return song_data
 
 def get_recommendations(m, user):
+    '''
+    gets predicted ratings for user, sorts them, adds rank column to sort by later.
+    Returns an SFrame of indcies to and rank
+    '''
     recs = gl.SFrame(np.argsort(m[user])).rename({'X1':'index'})
     recs = recs.add_row_number('rank')
     return recs
