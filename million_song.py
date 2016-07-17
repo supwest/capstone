@@ -81,28 +81,14 @@ def get_song_list(song_recommender, recommendations):
     return song_list
 
 def get_comparisons(user, movie_rec_matrix, movie_train, song_list, movie_recommender):
-    '''
-    need to figure this out
-    '''
     movie_users = movie_recommender.coefficients['user']['user']
     movie_users = gl.SFrame(movie_users).rename({"X1":'user'}).add_row_number('id')
-    #print movie_users.head()
     user_name = movie_users[movie_users['id']==user]['user'][0]
-    #print "user name is {}".format(user_name)
     user_loadings = get_recommendations(movie_rec_matrix, user)
-    #print user_loadings.head()
-    #print "Movie_train is........."
-    #print movie_train
     user_movies = movie_train[movie_train['user'] == user_name]
-    #print "user movies"
-    #print user_movies.head()
     user_movies = user_movies.sort('rating', ascending = False)
-    #print user_movies.head()
-    # adding a 'rank' column, but just to join, it's not really a proper ranking of the movies
     user_movies = user_movies.add_row_number('rank') 
-    #print user_movies.head()
     movies_and_songs = song_list.join(user_movies, on='rank', how='inner')
-    #print movies_and_songs.head()
     movies_and_songs = movies_and_songs['user', 'title', 'artist_name', 'movie']
     return movies_and_songs
 
@@ -125,7 +111,6 @@ if __name__ == '__main__':
     song_data = get_song_data()
     user = 866 #index of user
     recommendations = get_recommendations(movie_rec_matrix, user)
-    #recommendations = recommendations.add_row_number('rank') #this will be the column for sorting later
     song_list = get_song_list(song_recommender, recommendations)
     comparison = get_comparisons(user, movie_rec_matrix, movie_train, song_list, movie_recommender)
     print comparison.head()
