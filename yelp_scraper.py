@@ -69,7 +69,7 @@ if __name__ == '__main__':
     )
 
     yelp.set_yelp_client(auth)
-    yelp.set_mongo_client('yelp', 'reviews')
+    #yelp.set_mongo_client('yelp', 'reviews')
     
     params = {'term': 'food'}
     loc = 'Denver'
