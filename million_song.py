@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import graphlab as gl
 import os
+from sklearn.metrics import pairwise_distances
 def get_sf():
     if os.exists['song_recommender']:
         song_sf = gl.load_model('song_recommender')
@@ -92,6 +93,53 @@ def get_comparisons(user, movie_rec_matrix, movie_train, song_list, movie_recomm
     movies_and_songs = movies_and_songs['user', 'title', 'artist_name', 'movie']
     return movies_and_songs
 
+def get_factors(recommender, name):
+    '''
+    takes recommender model, and returns right matrix of decompostion:
+    Matrix with latent factors as rows and items (i.e. movies or songs) as columns
+    '''
+    factors = recommender.coefficients[name]['factors']
+    latent_factors = []
+    for i in xrange(len(factors[0])):
+        lf = [x[i] for x in factors]
+        latent_factors.append(lf)
+    return latent_factors
+
+def reorder_factors_cosine(lf1, lf2):
+    '''
+    takes arrays of latent factors and reorders lf2 by correlation with latent factors in lf1.
+    
+    This reordering is just pairwise using cosine sim, but the correlation depends on column order which is arbitrary.
+
+    So I'll try other measures to order latent factors
+    '''
+
+    min_dim = min(lf1.shape[1], lf2.shape[1])
+    new_lf2 = np.array([lf[:min_dim] for lf in lf2])
+    new_lf = []
+    for idx, lf in enumerate(lf1):
+        #print idx
+        #print lf
+        order = np.argsort(pairwise_distances(lf[:min_dim].reshape(1,-1), new_lf2))
+        #print new_lf2
+        #print order[0]
+        new_lf2 = new_lf2[order[0]]
+        #print new_lf2
+        new_lf.append(new_lf2[0])
+        new_lf2 = new_lf2[1:]
+        #print new_lf2
+    #print new_lf
+    return new_lf
+            
+
+def reorder_factors_variance(lf1, lf2):
+    var1 = np.var(lf1, axis=1)
+    lf1_ordered = lf1[np.argsort(var1)]
+    var2 = np.var(lf2, axis=1)
+    lf2_ordered = lf2[np.argsort(var2)]
+    #lf2_reordered = lf2[np.argsort(var2)[np.argsort(var1)]]
+    #lf2_reordered = lf2[np.argsort(var1)[np.argsort(var2)]]
+    return lf1_ordered, lf2_ordered
 
 
 if __name__ == '__main__':
@@ -103,13 +151,45 @@ if __name__ == '__main__':
     movie_U = movie_recommender.coefficients['user']['factors']
     movie_V = movie_recommender.coefficients['movie']['factors']
 
-    movie_rec_matrix = np.dot(movie_U, np.transpose(song_V))
+    #movie_rec_matrix = np.dot(movie_U, np.transpose(song_V))
 
     '''
     the movie database doesn't have the movieid numbers so I'll have to get the     '''
 
     song_data = get_song_data()
-    user = 866 #index of user
+    #user = 866 #index of user
+    #user = 2956
+    #user = 9379
+    user = np.random.choice(len(movie_U))
+    #user = 2956
+    print len(movie_U)
+    print user
+
+    '''
+    before generating recommendations, reorder right song matrix
+
+    to use cosine similarity: from sklearn.metrics import pairwise_distance
+    from scipy.spatial.distance import cosine
+    
+    '''
+
+    movie_factors = np.array(get_factors(movie_recommender, 'movie'))
+    song_factors = np.array(get_factors(song_recommender, 'songid'))
+    #print movie_factors
+    #print song_factors
+    #a = raw_input("?")
+    nlf = reorder_factors_cosine(movie_factors, song_factors)
+    nlf1, nlf2 = reorder_factors_variance(movie_factors, song_factors)
+    #print nlf
+    #print nlf2
+    #movie_rec_matrix = np.dot(movie_U, nlf2)
+    #print nlf1.shape
+    #print nlf2.shape
+    #print movie_U.shape
+    #raw_input("?")
+
+    movie_rec_matrix = np.dot(movie_U, nlf2)
+
     recommendations = get_recommendations(movie_rec_matrix, user)
     song_list = get_song_list(song_recommender, recommendations)
     comparison = get_comparisons(user, movie_rec_matrix, movie_train, song_list, movie_recommender)
