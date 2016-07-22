@@ -10,8 +10,12 @@ plt.style.use('ggplot')
 import cPickle as pickle
 from multiprocessing import Pool
 from time import time
+from pathos.multiprocessing import ProcessingPool
+import dill
 
-
+def f((self, shuffle)):
+    new_matrix = self._make_test_matrix(shuffle)
+    return self._get_test_score(new_matrix)
 
 class User(object):
     '''
@@ -212,7 +216,25 @@ class Tester(object):
             scores.append((shuffle, score))
         return scores
 
-   
+    def parallel_test(self, how='user'):
+
+        self.test_how = how
+        idxes = [i for i in xrange(len(self.matrix_2.items))]
+        shuffles = permutations(idxes)
+        print shuffles
+        #shuffs = [x for x in shuffles]
+        shuffles2 = np.array([x for x in shuffles])
+        print shuffles2
+        #p = Pool(2)
+        p = ProcessingPool(nodes=2)
+        result = p.map(f, [self]*len(shuffles2), shuffles)
+        p.close()
+        p.join()
+        return result
+
+    def _f(self, shuffle):
+        new_matrix = self._make_test_matrix(shuffle)
+        return self._get_test_score(new_matrix)
 
     def _make_shuffled_matrix(self, shuffle):
         '''
@@ -298,4 +320,12 @@ if __name__ == '__main__':
     #plt.show()
     #plt.close()
 
+
+    start = time()
+    test.test('user')
+    print time()-start
+
+    start=time()
+    a = test.parallel_test('user')
+    print time()-start
     
