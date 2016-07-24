@@ -185,6 +185,8 @@ class Tester(object):
             return np.diag(s)
         elif how == 'combined':
             return np.sqrt(np.dot(np.diag(self.matrix_1.s), np.diag(s)))
+        else:
+            return np.eye(np.diag(self.matrix_1.s).shape)
 
     def _get_test_score(self, matrix):
         '''
@@ -307,8 +309,10 @@ if __name__ == '__main__':
 
     #print test_matrix.ratings
 
-    movies = RatingsMatrix(4,4, item_loadings, user_loadings)
-    songs = RatingsMatrix(4,4, item_loadings, user_loadings)
+    num_users = 8
+    num_items = 8
+    movies = RatingsMatrix(num_users, num_items, item_loadings, user_loadings)
+    songs = RatingsMatrix(num_users, num_items, item_loadings, user_loadings)
 
     test = Tester(movies, songs)
     #print test.true_matrix
@@ -322,10 +326,40 @@ if __name__ == '__main__':
 
 
     start = time()
-    test.test('user')
+    svd_user = test.test('user')
     print time()-start
 
-    start=time()
-    a = test.parallel_test('user')
+    start = time()
+    svd_item = test.test('item')
     print time()-start
+    
+    start=time()
+    svd_square = test.test('combined')
+    print time()-start
+
+    user_scores = np.array([s[1] for s in svd_user])
+    user_orders = np.array([s[0] for s in svd_user])
+
+    item_scores = np.array([s[1] for s in svd_item])
+    item_orders = np.array([s[0] for s in svd_item])
+
+    square_scores = np.array([s[1] for s in svd_square])
+    square_orders = np.array([s[0] for s in svd_square])
+
+    plt.hist(user_scores, alpha=.4, color='g', normed=1, label='user sigma')
+    plt.hist(item_scores, alpha=.4, color='b', normed=1, label='item sigma')
+    plt.hist(square_scores, alpha=.4, color='r', normed=1, label='combined sigma')
+    plt.legend(loc='best')
+    plt.savefig('{0}by{1}_4.png'.format(num_users, num_items))
+    plt.close()
+    
+    user_sorted = user_orders[np.argsort(user_scores)[::-1]]
+    item_sorted = item_orders[np.argsort(item_scores)[::-1]]
+    square_sorted = square_orders[np.argsort(square_scores)[::-1]]
+
+    print zip(user_sorted, item_sorted, square_sorted)[:5]
+
+    #start=time()
+    #a = test.parallel_test('user')
+    #print time()-start
     
