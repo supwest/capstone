@@ -2,4 +2,6 @@
 *.ipynb
 *.pkl
 template/
-app/
+app/__MACOSX
+app/templates/assets
+app/templates/theme
