@@ -57,9 +57,9 @@ if __name__ == '__main__':
     song to movie comparison
     '''
     movie_song_similarity = pairwise_distances(songs_V.T[0].reshape(1,-1), movies_V.T, metric='cosine')
-    movies[np.argsort(cluster[0])[::-1])
+    movies[np.argsort(movie_song_similarity[0])[::-1]]
 
-    with open('data/movie_titles.pkl', 'wb') as f:
-        pickle.dump(f)
-    with open('data/similarity.pkl', 'wb') as f:
-        pickle.dump(f)
+    #with open('data/movie_titles.pkl', 'wb') as f:
+    #   pickle.dump(f)
+    #with open('data/similarity.pkl', 'wb') as f:
+    #    pickle.dump(f)

@@ -37,11 +37,12 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </button>
-          <a class="navbar-brand" href="#"><b>FLATTY</b></a>
+          <a class="navbar-brand" href="#"><b>MATRIX</b></a>
         </div>
         <div class="navbar-collapse collapse">
           <ul class="nav navbar-nav navbar-right">
-            <li><a href="#">Already a member?</a></li>
+            <li><a href="#movie">Get a movie</a></li>
+            <li><a href="#movie">Get a song</a></li>
           </ul>
         </div><!--/.nav-collapse -->
       </div>
@@ -55,10 +56,11 @@
                         Matrix<br/>
                         Recommended</h1>
 					<form action = {{ url_for('index')+'#movie' }} class="form-inline" role="form">
-					  <div class="form-group">
+				<!--	  <div class="form-group">
 					    <input type="email" class="form-control" id="exampleInputEmail1" placeholder="Enter your email address">
-					  </div>
+                </div>  -->
 					  <button type="submit" class="btn btn-warning btn-lg">Show Me</button>
+                      <button type="submit" class="btn btn-warning btn-lg">Show Me</button>
 					</form>					
 				</div><!-- /col-lg-6 -->
 				<div class="col-lg-6">
@@ -129,9 +131,9 @@
 			<div class="col-lg-6 col-lg-offset-3">
 				<form class="form-inline" role="form">
 				  <div class="form-group">
-				    <input type="email" class="form-control" id="exampleInputEmail1" placeholder="Enter your email address">
 				  </div>
-				  <button type="submit" class="btn btn-warning btn-lg">Invite Me!</button>
+                  These movies are most similar to the song, judged by item-to-item comparison.
+				  <button type="submit" class="btn btn-warning btn-lg">Reset</button>
 				</form>					
 			</div>
 			<div class="col-lg-3"></div>

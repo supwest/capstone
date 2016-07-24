@@ -10,8 +10,8 @@ plt.style.use('ggplot')
 import cPickle as pickle
 from multiprocessing import Pool
 from time import time
-from pathos.multiprocessing import ProcessingPool
-import dill
+#from pathos.multiprocessing import ProcessingPool
+#import dill
 
 def f((self, shuffle)):
     new_matrix = self._make_test_matrix(shuffle)
@@ -120,7 +120,7 @@ class Tester(object):
                 m[idx, idx2] = np.dot(self.matrix_1.user_types[user], self.matrix_2.item_types[item])
         return m
 
-    def _make_test_matrix(self, matrix):
+    def _make_test_matrix(self, matrix, test_decomp='svd'):
         '''
         Input: a matrix
         Output: a recomposed estimated ratings matrix
@@ -128,8 +128,7 @@ class Tester(object):
         Decomposes input matrix according to decomposition type
         and then makes an estimated ratings matrix
         '''
-
-        if self.decomp_type == 'svd':
+        if test_decomp == 'svd':
             _, s1, V = svd(matrix)
             how = self.s_option
             how = self.test_how
@@ -140,9 +139,10 @@ class Tester(object):
             #print V
             #print self.matrix_1.U
             return np.dot(self.matrix_1.U, np.dot(s, V))
-        elif self.decomp_type == 'nmf':
+        elif test_decomp == 'nmf':
             model = NMF()
             H = model.fit_transform(matrix)
+            print H
             W = model.components_
             return np.dot(self.matrix_1.H, W)
         else:
@@ -188,18 +188,18 @@ class Tester(object):
         else:
             return np.eye(np.diag(self.matrix_1.s).shape)
 
-    def _get_test_score(self, matrix):
+    def _get_test_score(self, matrix, test_decomp='svd'):
         '''
         Input: matrix
         Output: float
 
         caclulates MSE between the true matrix and the test matrix
         '''
-        test_matrix = self._make_test_matrix(matrix)
+        test_matrix = self._make_test_matrix(matrix, test_decomp)
         score = np.mean((test_matrix - self.true_matrix)**2)
         return score
 
-    def test(self, how='user'):
+    def test(self, how='user', test_decomp='svd'):
         '''
         Input: None
         Output: list of tuples (shuffle, score)
@@ -214,7 +214,7 @@ class Tester(object):
             #print shuffle
             new_matrix = self._make_shuffled_matrix(shuffle)
             #print new_matrix
-            score = self._get_test_score(new_matrix)
+            score = self._get_test_score(new_matrix, test_decomp)
             scores.append((shuffle, score))
         return scores
 
@@ -227,8 +227,8 @@ class Tester(object):
         #shuffs = [x for x in shuffles]
         shuffles2 = np.array([x for x in shuffles])
         print shuffles2
-        #p = Pool(2)
-        p = ProcessingPool(nodes=2)
+        p = Pool(2)
+        #p = ProcessingPool(nodes=2)
         result = p.map(f, [self]*len(shuffles2), shuffles)
         p.close()
         p.join()
@@ -362,4 +362,7 @@ if __name__ == '__main__':
     #start=time()
     #a = test.parallel_test('user')
     #print time()-start
-    
+   
+    start = time()
+    nmf_test = test.test(test_decomp='nmf')
+    print time()-start
