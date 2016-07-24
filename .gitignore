@@ -1,3 +1,7 @@
 *.py.swp
 *.ipynb
 *.pkl
+*.png
+song_recommendations/*
+song_recommender/*
+movie_recommender/*
