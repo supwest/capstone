@@ -5,3 +5,8 @@
 song_recommendations/*
 song_recommender/*
 movie_recommender/*
+template/
+app/__MACOSX
+app/templates/assets
+app/templates/theme
+
