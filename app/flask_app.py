@@ -9,10 +9,10 @@ def get_movies(song):
     song_dict = {'bad_blood':0, 'stressed_out':1, 'panda':5, 'rock_me_amadeus':10, 'dont_let_me_down':2, 'hotline_bling':3, 'hands_to_myself':4, 'work_from_home':6, 'trap_queen':7, 'sorry':8, 'fancy':9, 'come_on_eileen':11, 'when_doves_cry':12, 'sweet_child_o_mine':13, 'billie_jean':14, 'every_breath_you_take':15, 'call_me':16, 'another_one_bites_the_dust':17, 'centerfold':18, 'lets_dance':19}
     path_to_movie_pickle='/home/cully/Documents/capstone/data/movie_titles.pkl'
     path_to_sim_pickle='/home/cully/Documents/capstone/data/similarity.pkl'
-    with open(path_to_movie_pickle, 'rb') as f:
+    with open(path_to_movie_pickle) as f:
         movie_titles = pickle.load(f)
     #movies_titles = pickle.load(path_to_movie_pickle)
-    with open(path_to_sim_pickle, 'rb') as f:
+    with open(path_to_sim_pickle) as f:
         similarity = pickle.load(f)
     images_dict = {'The Lego Movie': 'https://upload.wikimedia.org/wikipedia/en/1/10/The_Lego_Movie_poster.jpg', 
                 'Mad Max: Fury Road':'https://upload.wikimedia.org/wikipedia/en/6/6e/Mad_Max_Fury_Road.jpg',
@@ -26,8 +26,9 @@ def get_movies(song):
                 'Star Wars The Force Awakens': 'https://upload.wikimedia.org/wikipedia/en/a/a2/Star_Wars_The_Force_Awakens_Theatrical_Poster.jpg'
                 }
     #similarity = pickle.load(path_to_sim_pickle)
-    movies_list = movie_titles[np.argsort(similarity[song_dict[song]])[::-1]]
+    movies_list = movie_titles[np.argsort(similarity[song_dict[song]])]
     images_list = [images_dict[movie] for movie in movies_list]
+    
     return movies_list, images_list
 
 @app.route('/')
@@ -46,4 +47,4 @@ def recommender():
     return render_template('index.html')
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8000, debug=True)
+    app.run(host='0.0.0.0', port=8000, debug=True, threaded=True)

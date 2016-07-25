@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 from numpy.linalg import svd
 from sklearn.metrics import pairwise_distances
+import cPickle as pickle
 
 '''
 Script to read in csv file and make ratings matrix
@@ -53,16 +54,21 @@ if __name__ == '__main__':
     movie_suggestions = movies[np.argsort(pred_movies)]
     movie_actual = movies[np.argsort(movie_mat)]
 
+    with open('data/actual_movies.pkl', 'w') as f:
+        pickle.dump(movies_df, f)
+    with open('data/actual_songs.pkl', 'w') as f:
+        pickle.dump(songs_df, f)
+
     '''
     song to movie comparison
     '''
-    movie_song_similarity = pairwise_distances(songs_V.T[0].reshape(1,-1), movies_V.T, metric='cosine')
+    movie_song_similarity = pairwise_distances(songs_V.T, movies_V.T, metric='cosine')
     movies[np.argsort(movie_song_similarity[0])[::-1]]
 
-    #with open('data/movie_titles.pkl', 'wb') as f:
-    #   pickle.dump(f)
-    #with open('data/similarity.pkl', 'wb') as f:
-    #    pickle.dump(f)
+    with open('data/movie_titles.pkl', 'w') as f:
+        pickle.dump(movies, f)
+    with open('data/similarity.pkl', 'w') as f:
+        pickle.dump(movie_song_similarity, f)
 
     '''
     using one movie rating to update preferences and then get a song
@@ -74,3 +80,21 @@ if __name__ == '__main__':
     exemplar_movie_title = movies[0]
     exemplar_movie_loadings = movies_V.T[0]
 
+
+    '''
+    holdout test
+    '''
+    holdout_id = 12
+    holdout_song_ratings = songs_df.loc[holdout_id]
+    holdout_movie_ratings = movies_df.loc[holdout_id]
+    #for now easiest to holdout last row
+    holdout_movie_df = movies_df[:-1]
+    holdout_movie_U, holdout_movie_s, holdout_movie_V = svd(holdout_movie_df, full_matrices=False)
+    holdout_pred_movie_ratings = np.dot(songs_U[-1][:-1], np.dot(np.diag(holdout_movie_s), holdout_movie_V))
+    holdout_pred_movies = movies[np.argsort(holdout_pred_movie_ratings)[::-1]]
+    holdout_actual_movies = movies[np.argsort(holdout_movie_ratings)[::-1]]
+
+    '''
+    get song movie rating matrix
+    '''
+    movie_song_ratings = np.dot(movies_V.T, np.dot(np.diag(movies_s), songs_V))
