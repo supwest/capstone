@@ -55,13 +55,15 @@
 					<h1>The<br/>
                         Matrix<br/>
                         Recommended</h1>
-					<form action = {{ url_for('index')+'#movie' }} class="form-inline" role="form">
-				<!--	  <div class="form-group">
+				<!--	<form action = {{ url_for('index')+'#movie' }} class="form-inline" role="form">
+				  <div class="form-group">
 					    <input type="email" class="form-control" id="exampleInputEmail1" placeholder="Enter your email address">
-                </div>  -->
-					  <button type="submit" class="btn btn-warning btn-lg">Show Me</button>
-                      <button type="submit" class="btn btn-warning btn-lg">Show Me</button>
-					</form>					
+                </div>  
+                <button type="submit" class="btn btn-warning btn-lg">Show Me</button> 
+                    </form>
+                -->
+                    <a href="#movie" class='btn btn-warning btn-lg' role=button'>Movie</a>
+                <a href='#song' class='btn btn-warning btn-lg' role='button'>Song</a>                    
 				</div><!-- /col-lg-6 -->
 				<div class="col-lg-6">
 					<img class="img-responsive" src="http://vignette2.wikia.nocookie.net/matrix/images/8/84/Matrix.png/revision/latest?cb=20110307094037" alt="">
@@ -140,28 +142,40 @@
 		</div><!-- /row -->
 		<hr>
 	</div><!-- /container -->
-	
+
+	<section id='song'>
 	<div class="container">
 		<div class="row mt centered">
 			<div class="col-lg-6 col-lg-offset-3">
-				<h1>Flatty is for Everyone.</h1>
-				<h3>It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout.</h3>
+				<h1>Which Song?</h1>
+				<h3>Rate this movie from 1 to 5 to get your song recommendations</h3>
 			</div>
 		</div><!-- /row -->
-	
-		<! -- CAROUSEL -->
+        
+		<!-- CAROUSEL -->
 		<div class="row mt centered">
 			<div class="col-lg-6 col-lg-offset-3">
 				<div id="carousel-example-generic" class="carousel slide" data-ride="carousel">
+                    <form action={{ url_for('index')+'#song' }}, method='POST'>
+                        <input type='radio' value='1'>1
+                        <input type='radio' value='2'>2
+                        <input type='radio' value='3'>3
+                        <input type='radio' value='4'>4
+                        <input type='radio' value='5'>5<br>
+                        <button type='submit' class='btn btn-warning btn-lg'>Show Me</button>
+                    </form>
 				  <!-- Indicators -->
+                  <!--
 				  <ol class="carousel-indicators">
 				    <li data-target="#carousel-example-generic" data-slide-to="0" class="active"></li>
 				    <li data-target="#carousel-example-generic" data-slide-to="1"></li>
 				    <li data-target="#carousel-example-generic" data-slide-to="2"></li>
 				  </ol>
-				
+			    -->	
 				  <!-- Wrapper for slides -->
-				  <div class="carousel-inner">
+                  <!--
+				   <div class="carousel-inner">
+
 				    <div class="item active">
 				      <img src="assets/img/p01.png" alt="">
 				    </div>
@@ -172,10 +186,12 @@
 				      <img src="assets/img/p03.png" alt="">
 				    </div>
 				  </div>
-				</div>			
+				</div>	
+                -->        
 			</div><!-- /col-lg-8 -->
 		</div><!-- /row -->
-	</div><! --/container -->
+        </section>
+	</div><!--/container -->
 	
 	<div class="container">
 		<hr>

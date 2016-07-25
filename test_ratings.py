@@ -63,3 +63,14 @@ if __name__ == '__main__':
     #   pickle.dump(f)
     #with open('data/similarity.pkl', 'wb') as f:
     #    pickle.dump(f)
+
+    '''
+    using one movie rating to update preferences and then get a song
+    '''
+    #first get average user lf loadings from songs_U
+    avg_loadings = np.mean(songs_U.T, axis=1)
+
+    #get a movie for user to rate, just use first one for now
+    exemplar_movie_title = movies[0]
+    exemplar_movie_loadings = movies_V.T[0]
+
