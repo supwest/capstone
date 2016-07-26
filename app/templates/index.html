@@ -108,7 +108,7 @@
 					
 				</select>
 				<button type='submit' class="btn btn-warning btn-lg">I'm feelin it</button>
-				</form>
+                	</form> 
 			</div>
 		</div><!-- /row -->
 		
@@ -131,11 +131,10 @@
 		<hr>
 		<div class="row centered">
 			<div class="col-lg-6 col-lg-offset-3">
-				<form class="form-inline" role="form">
+                <form class="form-inline" role="form">
 				  <div class="form-group">
 				  </div>
-                  These movies are most similar to the song, judged by item-to-item comparison.
-				  <button type="submit" class="btn btn-warning btn-lg">Reset</button>
+                  <button type="submit" class="btn btn-warning btn-lg">Reset</button>
 				</form>					
 			</div>
 			<div class="col-lg-3"></div>
@@ -156,7 +155,7 @@
 		<div class="row mt centered">
 			<div class="col-lg-6 col-lg-offset-3">
 				<div id="carousel-example-generic" class="carousel slide" data-ride="carousel">
-                    <form action={{ url_for('index')+'#song' }}, method='POST'>
+                    <form action="{{ url_for('index')+'#song' }}" method='POST'>
                         <input type='radio' value='1'>1
                         <input type='radio' value='2'>2
                         <input type='radio' value='3'>3
