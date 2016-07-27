@@ -49,42 +49,61 @@
       </div>
     </div>
 
-	<div id="headerwrap" background-image=url('http://wallpapercave.com/wp/70zTJIp.jpg')>
-		<div class="container">
-			<div class="row">
-				<div class="col-lg-6">
-					<h1>The<br/>
-                        Matrix<br/>
-                        Recommended</h1>
-				<!--	<form action = {{ url_for('index')+'#movie' }} class="form-inline" role="form">
-				  <div class="form-group">
-					    <input type="email" class="form-control" id="exampleInputEmail1" placeholder="Enter your email address">
-                </div>  
-                <button type="submit" class="btn btn-warning btn-lg">Show Me</button> 
-                    </form>
-                -->
-                    <a href="/get_movie" class='btn btn-warning btn-lg' role=button'>Movie</a>
-                <a href='/get_song' class='btn btn-warning btn-lg' role='button'>Song</a>
-                <a href='/get_song2' class='btn btn-warning btn-lg' role='button'>Song</a>
-				</div><!-- /col-lg-6 -->
-				<div class="col-lg-6">
-					<img class="img-responsive" src="http://vignette2.wikia.nocookie.net/matrix/images/8/84/Matrix.png/revision/latest?cb=20110307094037" alt="">
-				</div><!-- /col-lg-6 -->
-				
-			</div><!-- /row -->
-		</div><!-- /container -->
-	</div><!-- /headerwrap -->
-	
-	
-		
-	
-
-	
+<section id='song'>
 	<div class="container">
-					<hr>
-		<p class="centered">Created by BlackTie.co - Attribution License 3.0 - 2013</p>
-	</div><!-- /container -->
-	
+		<div class="row mt centered">
+			<div class="col-lg-6 col-lg-offset-3">
+				<h1>Which Song?</h1>
+				<h3>Rate this movie from 1 to 5 to get your song recommendations</h3>
+			</div>
+		</div><!-- /row -->
+        
+		<!-- CAROUSEL -->
+		<div class="row mt centered">
+			<div class="col-lg-6 col-lg-offset-3">
+				<div id="carousel-example-generic" class="carousel slide" data-ride="carousel">
+                    <form action="{{ url_for('get_updated_song_recs') }}" method='POST'>
+                        <input type='radio' name='rating' value='1'>1
+                        <input type='radio' name='rating' value='2'>2
+                        <input type='radio' name='rating' value='3'>3
+                        <input type='radio' name='rating' value='4'>4
+                        <input type='radio' name='rating' value='5'>5<br>
+                        <button type='submit' class='btn btn-warning btn-lg'>Show Me</button>
+                    </form>
+                    {% block show_song %}{% endblock %}
+				  <!-- Indicators -->
+                  <!--
+				  <ol class="carousel-indicators">
+				    <li data-target="#carousel-example-generic" data-slide-to="0" class="active"></li>
+				    <li data-target="#carousel-example-generic" data-slide-to="1"></li>
+				    <li data-target="#carousel-example-generic" data-slide-to="2"></li>
+				  </ol>
+			    -->	
+				  <!-- Wrapper for slides -->
+                  <!--
+				   <div class="carousel-inner">
+
+				    <div class="item active">
+				      <img src="assets/img/p01.png" alt="">
+				    </div>
+				    <div class="item">
+				      <img src="assets/img/p02.png" alt="">
+				    </div>
+				    <div class="item">
+				      <img src="assets/img/p03.png" alt="">
+				    </div>
+				  </div>
+				</div>	
+                -->        
+			</div><!-- /col-lg-8 -->
+		</div><!-- /row -->
+        </section>
+	</div><!--/container -->
+
+
+
+
+
 
     <!-- Bootstrap core JavaScript
     ================================================== -->

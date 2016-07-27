@@ -49,42 +49,30 @@
       </div>
     </div>
 
-	<div id="headerwrap" background-image=url('http://wallpapercave.com/wp/70zTJIp.jpg')>
-		<div class="container">
-			<div class="row">
-				<div class="col-lg-6">
-					<h1>The<br/>
-                        Matrix<br/>
-                        Recommended</h1>
-				<!--	<form action = {{ url_for('index')+'#movie' }} class="form-inline" role="form">
-				  <div class="form-group">
-					    <input type="email" class="form-control" id="exampleInputEmail1" placeholder="Enter your email address">
-                </div>  
-                <button type="submit" class="btn btn-warning btn-lg">Show Me</button> 
-                    </form>
-                -->
-                    <a href="/get_movie" class='btn btn-warning btn-lg' role=button'>Movie</a>
-                <a href='/get_song' class='btn btn-warning btn-lg' role='button'>Song</a>
-                <a href='/get_song2' class='btn btn-warning btn-lg' role='button'>Song</a>
-				</div><!-- /col-lg-6 -->
-				<div class="col-lg-6">
-					<img class="img-responsive" src="http://vignette2.wikia.nocookie.net/matrix/images/8/84/Matrix.png/revision/latest?cb=20110307094037" alt="">
-				</div><!-- /col-lg-6 -->
-				
-			</div><!-- /row -->
-		</div><!-- /container -->
-	</div><!-- /headerwrap -->
-	
-	
+   	<div class="container">
+		<div class="row mt centered">
+			<div class="col-lg-6 col-lg-offset-3">
+				<h1>Have a movie recommend some songs for you</h1>
+				<h2>Choose a movie to find out its recommendations</h2>
+			</div>
+        </div><!-- /row -->
 		
-	
+		<div class="row mt centered">
+                <div class="row mt centered">
+                    {% block one %}{% endblock %}
+                </div><!-- /row -->
 
-	
-	<div class="container">
-					<hr>
-		<p class="centered">Created by BlackTie.co - Attribution License 3.0 - 2013</p>
-	</div><!-- /container -->
-	
+            <form action = '{{ url_for("movie_song_recs") }}' method='POST'>
+                <select name='movie'>
+                    <option selected disabled hidden style='display: none' value=' '></option>
+                    {% for movie in movies %}
+                    <option value="{{ movie }}">{{ movies[movie] }}</option>
+                    {% endfor %}
+                </select>
+                <button type="submit" class='btn btn-warning btn-lg'>Show Me</button>
+            </form>
+				</div><!-- /row -->
+               	</div><!-- /container --> 
 
     <!-- Bootstrap core JavaScript
     ================================================== -->

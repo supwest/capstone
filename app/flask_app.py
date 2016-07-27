@@ -31,20 +31,73 @@ def get_movies(song):
     
     return movies_list, images_list
 
+def get_movie_recommended_songs(movie):
+    path_to_songs = '/home/cully/Documents/capstone/data/song_titles.pkl'
+    path_to_matrix = '/home/cully/Documents/capstone/data/movie_song_matrix.pkl'
+
+    movie_dict={'inside_out':9,
+            'get_hard':0,
+            'star_wars':2,
+            'fast_7':7,
+            'the_fault_in_our_stars':3,
+            'the_martian':1,
+            'the_lego_movie':5,
+            'the_revenant':4,
+            'ted_2':6,
+            'mad_max_fury_road':8
+            } 
+
+    with open(path_to_songs) as f:
+        song_titles = pickle.load(f)
+    with open(path_to_matrix) as f:
+        rec_matrix = pickle.load(f)
+
+    song_recs = song_titles[np.argsort(rec_matrix[movie_dict[movie]])[::-1]]
+    return song_recs
+
+
 @app.route('/')
 @app.route('/home')
 def index():
     return render_template('index.html')
-    #return str('hello')
 
-@app.route('/home', methods=['GET','POST'])
+@app.route('/get_movie', methods=['GET','POST'])
 def recommender():
-    #return "recommender goes here"
     if request.method == 'POST':
         song = (request.form['song'])
         recommendations, images = get_movies(song)
         return render_template('get_movie_recs.html', movie1=recommendations[0], image1=images[0], movie2=recommendations[1], image2=images[1], movie3=recommendations[2], image3=images[2])
-    return render_template('index.html')
+    return render_template('get_movie.html')
+
+@app.route('/get_song', methods=["GET",'POST'])
+def movie_song_recs():
+    movie_dict={'inside_out':'Inside Out',
+            'get_hard':'Get Hard',
+            'star_wars':'Star Wars: The Force Awakens',
+            'fast_7':'Fast 7',
+            'the_fault_in_our_stars':'The Fault in Our Stars',
+            'the_martian':'The Martian',
+            'the_lego_movie':'The Lego Movie',
+            'the_revenant':'The Revenant',
+            'ted_2':'Ted 2',
+            'mad_max_fury_road':'Mad Max: Fury Road'
+            }
+    if request.method == 'POST':
+        movie = (request.form['movie'])
+        recommendations = get_movie_recommended_songs(movie)
+        return render_template('get_song_recs.html',movie=movie_dict[movie], songs=recommendations[:5], movies=movie_dict)
+    return render_template('get_song.html', movies=movie_dict)
+
+
+@app.route('/get_song2', methods=['GET','POST'])
+def get_updated_song_recs():
+    if request.method == 'POST':
+        rating = (request.form['rating'])
+        #recommendations = get_song_recommendations(rating)
+        recommendations = 'song'
+        return render_template('get_song_recs_2.html', song=recommendations)
+    return render_template('get_song2.html')
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8000, debug=True, threaded=True)
