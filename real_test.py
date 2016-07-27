@@ -31,7 +31,9 @@ class Matrix(object):
         Returns them, and they
         can be input for new Matrix objects
         '''
-        return Matrix(self.matrix[:idx]), Matrix(self.matrix[idx:])
+        df1 = self.matrix[:idx].copy().reset_index()
+        df2 = self.matrix[idx:].copy().reset_index()
+        return Matrix(df1), Matrix(df2)
 
     
 class PredictedMatrix(object):
@@ -56,7 +58,9 @@ class PredictedMatrix(object):
         return pd.DataFrame(m, index = self.users, columns=self.items)
 
     def split(self, idx=4):
-        return Matrix(self.matrix[:idx]), Matrix(self.matrix[idx:])
+        df1 = self.matrix[:idx].copy().reset_index()
+        df2 = self.matrix[:idx].copy().reset_index()
+        return Matrix(df1), Matrix(df2)
 
 class Tester(object):
     '''
@@ -81,7 +85,8 @@ class Tester(object):
         between the true matrix and the fitted matrix
 
         '''
-        ea = matrix1.reset_index(drop=True) -matrix2.reset_index(drop=True)
+        ea=matrix1 - matrix2
+        #ea = matrix1.reset_index(drop=True) -matrix2.reset_index(drop=True)
         #print ea
         #sq_e = e**2
         #sum_sq_e = np.mean(np.sum(sq_e))
@@ -97,6 +102,8 @@ class Tester(object):
         (run common_user_test with different nums in common to see problem)
         '''
         m1, m2 = self.matrix_1.split()
+        print m1.matrix
+        print m2.matrix
         m1_temp = Matrix(m1.matrix.copy())
         #print m1.matrix
         #print m2.matrix

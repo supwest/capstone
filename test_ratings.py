@@ -84,7 +84,7 @@ if __name__ == '__main__':
     '''
     holdout test
     '''
-    holdout_id = 12
+    holdout_id = 8
     holdout_song_ratings = songs_df.loc[holdout_id]
     holdout_movie_ratings = movies_df.loc[holdout_id]
     #for now easiest to holdout last row
