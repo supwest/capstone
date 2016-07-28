@@ -6,7 +6,8 @@ import pandas as pd
 import numpy as np
 from numpy.linalg import svd
 import cPickle as pickle
-from fancyimpute import NuclearNormMinimization, KNN, BiScaler, SoftImpute, SimpleFill, IterativeSVD
+#from fancyimpute import NuclearNormMinimization, KNN, BiScaler, SoftImpute, SimpleFill, IterativeSVD
+import graphlab as gl
 
 def matrix_concat(m1, m2, axis=0):
     '''
@@ -196,13 +197,14 @@ if __name__ == '__main__':
     Find MSE of Block Diagonal NaN Matrix
     '''
     bd, bd_matrix, full = block_diagonal(movies, songs)
+    
     #print bd
     #bd_U, bd_s, bd_V = svd(bd.matrix, full_matrices=False)
     #bd_filled = NuclearNormMinimization().complete(bd)
-    bd_filled = SoftImpute().complete(bd)
+    #bd_filled = SoftImpute().complete(bd)
     #bd_filled = KNN(k=3).complete(bd)
     #bd_filled = IterativeSVD.complete(bd)
-    bd_df = pd.DataFrame(bd_filled, index=full.matrix.index, columns=full.matrix.columns)
+    #bd_df = pd.DataFrame(bd_filled, index=full.matrix.index, columns=full.matrix.columns)
     #bd_filled = KNN(k=3).complete(bd)
     #bd_filled = BiScaler().complete(bd)
     #bd_pred = np.dot(bd_U, np.dot(np.diag(bd_s), bd_V))
@@ -210,9 +212,10 @@ if __name__ == '__main__':
     
     
 
-    bd_pred = Matrix(bd_df)
-    test2 = Tester(full, bd_pred)
-    t_mse = test2.mse
+    #bd_pred = Matrix(bd_df)
+    #test2 = Tester(full, bd_pred)
+    #test2 = Tester(full, Matrix(bd))
+    #t_mse = test2.mse
 
     '''
     build matrix out of full and predicted parts
@@ -267,18 +270,65 @@ if __name__ == '__main__':
 
     #interleaved_nan = pd.concat([top_nan, bottom_nan])
     interleaved_nan = df_nan
-    interleaved_filled = SoftImpute().complete(interleaved_nan)
-    interleaved_df = pd.DataFrame(interleaved_filled, index=full.matrix.index, columns=full.matrix.columns)
-    i_leaved = Matrix(interleaved_df)
+    #interleaved_filled = SoftImpute().complete(interleaved_nan)
+    #interleaved_df = pd.DataFrame(interleaved_filled, index=full.matrix.index, columns=full.matrix.columns)
+    #i_leaved = Matrix(interleaved_df)
     interleaved = Matrix(df_zeros)
     interleaved_pred = PredictedMatrix(interleaved, interleaved)
     test4 = Tester(full, interleaved)
     test4.mse
-    test5 = Tester(full, i_leaved)
-    print test5.mse
+    #test5 = Tester(full, i_leaved)
+    print test4.mse
     
     ids = [i for i in bd.index]
     bd.insert(0, 'id', ids)
     value_vars = [i for i in bd.columns.values[1:]]
     a = pd.melt(bd, id_vars=['id'], value_vars=value_vars)
+
+    train_sf = gl.SFrame(a.dropna())
+    full_sf = gl.SFrame(a)
+
+    gl_rec = gl.factorization_recommender.create(train_sf, user_id = 'id', item_id='variable', target='value')
+
+    predictions = pd.DataFrame(np.array(gl_rec.predict(full_sf)), columns=['prediction'])
+    full_df = full.matrix
+    full_df.insert(0, 'id', ids)
+    full_melt = pd.melt(full_df, id_vars=['id'], value_vars=value_vars)
+    full_preds = pd.concat([full_melt, predictions], axis=1)
+
+    error = np.mean(np.square(full_preds.eval('value-prediction')))
+
+
+    '''
+    updating factor loadings for new users
+    use avg of movie user factor loadings, get a movie rating,
+    find the 'rating' for that movie with out the first singular value
+    then solve for the user factor loading on the first sv that
+    reproduces the rating
+    '''
+
+    avgs = np.mean(movies.U, axis=0)
+    new_rating=1
+    position = 0
+    reconstructed_ratings = np.dot(avgs[1:], np.dot(np.diag(movies.s[1:]), movies.V[1:]))
+
+    x = movies.s[0]*movies.V[:,0][0]
+    new_loading = (new_rating-reconstructed_ratings[0])/x
+    new_avgs = [a for a in avgs]
+    new_avgs[0] = new_loading
+    new_song_ratings = np.dot(new_avgs, np.dot(np.diag(movies.s), songs.V))
+    print new_song_ratings
+    new_song_preds = songs.items[np.argsort(new_song_ratings)[::-1]]
+    avg_song_ratings = np.dot(avgs, np.dot(np.diag(movies.s), songs.V))
+    avg_song_preds = songs.items[np.argsort(avg_song_ratings)[::-1]]
+    new_movie_ratings = np.dot(new_avgs, np.dot(np.diag(movies.s), movies.V))
+    avg_movie_ratings = np.dot(avgs, np.dot(np.diag(movies.s), movies.V))
+    avg_movie_preds = movies.items[np.argsort(avg_movie_ratings)[::-1]]
+    new_movie_preds = movies.items[np.argsort(new_movie_ratings)[::-1]]
+    print "avg preds {}".format(avg_movie_preds)
+    print "new_preds {}".format(new_movie_preds)
+    print "new songs {}".format(new_song_preds)
+    print 'avg songs {}'.format(avg_song_preds)
+    
+    
 
