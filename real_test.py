@@ -308,15 +308,18 @@ if __name__ == '__main__':
     '''
 
     avgs = np.mean(movies.U, axis=0)
-    new_rating=1
-    position = 0
-    reconstructed_ratings = np.dot(avgs[1:], np.dot(np.diag(movies.s[1:]), movies.V[1:]))
-
-    x = movies.s[0]*movies.V[:,0][0]
-    new_loading = (new_rating-reconstructed_ratings[0])/x
+    new_rating=5
+    position = 1 #4: The revenanat, 1: the martian
+    #reconstructed_ratings = np.dot(avgs[1:], np.dot(np.diag(movies.s[1:]), movies.V[1:]))
+    one_factor_rating = np.dot(movies.s[0], movies.V[0, position])
+    new_loading = new_rating/one_factor_rating
+    #x = movies.s[0]*movies.V[:,position][0]
+    #new_loading = (new_rating-reconstructed_ratings[position])/x
     new_avgs = [a for a in avgs]
     new_avgs[0] = new_loading
-    new_song_ratings = np.dot(new_avgs, np.dot(np.diag(movies.s), songs.V))
+    #new_song_ratings = np.dot(new_avgs, np.dot(np.diag(movies.s), songs.V))
+    #new_song_ratings_one_factor = np.dot(new_avgs[0], np.dot(np.diag(movies.s[0]), songs.V[0])
+    new_song_ratings = np.dot(new_avgs[0], np.dot(movies.s[0], songs.V[0]))
     print new_song_ratings
     new_song_preds = songs.items[np.argsort(new_song_ratings)[::-1]]
     avg_song_ratings = np.dot(avgs, np.dot(np.diag(movies.s), songs.V))
@@ -331,4 +334,56 @@ if __name__ == '__main__':
     print 'avg songs {}'.format(avg_song_preds)
     
     
+    '''
+    incorporate gl factors
+    '''
+    eighties_songs = songs.matrix.iloc[:, 10:]
+    ids = [i for i in eighties_songs.index]
+    eighties_songs.insert(0, 'id', ids)
+    current_songs = songs.matrix.iloc[:, :10]
+    ids = [i for i in current_songs.index]
+    current_songs.insert(0, 'id', ids)
+    eighties_values = [a for a in eighties_songs.columns[1:]]
+    current_values = [a for a in current_songs.columns[1:]]
+    movies_df = movies.matrix
+    ids = [i for i in movies_df.index]
+    movies_df.insert(0, 'id', ids)
+    movies_values = [a for a in movies_df.columns[1:]]
 
+    songs_df = songs.matrix
+    ids = [i for i in songs_df.index]
+    songs_df.insert(0, 'id', ids)
+    songs_values = [a for a in songs_df.columns[1:]]
+    songs_melt = pd.melt(songs_df, id_vars='id', value_vars = songs_values)
+
+    
+
+    eighties_melt = pd.melt(eighties_songs, id_vars=['id'], value_vars = eighties_values)
+    current_melt = pd.melt(current_songs, id_vars=['id'], value_vars = current_values)
+    movies_melt = pd.melt(movies_df, id_vars=['id'], value_vars=movies_values)
+    eighties_sf = gl.SFrame(eighties_melt)
+    current_sf = gl.SFrame(current_melt)
+    movies_sf = gl.SFrame(movies_melt)
+    songs_sf = gl.SFrame(songs_melt)
+
+    eighties_rec = gl.factorization_recommender.create(eighties_sf, user_id='id', item_id='variable', target='value')
+    current_rec = gl.factorization_recommender.create(current_sf, user_id='id', item_id='variable', target='value')
+    movies_rec = gl.factorization_recommender.create(movies_sf, user_id='id', item_id='variable', target='value')
+    songs_rec = gl.factorization_recommender.create(songs_sf, user_id='id', item_id='variable', target='value')
+
+    eighties_ui = eighties_rec.coefficients['id']['linear_terms']
+    eighties_ufactors = eighties_rec.coefficients['id']['factors']
+    eighties_ii = eighties_rec.coefficients['variable']['linear_terms']
+    eighties_ifactors = eighties_rec.coefficients['variable']['factors']
+    eighties_intercept = eighties_rec.coefficients['intercept']
+
+    def get_coeffs(rec):
+        user_intercept = rec.coefficients['id']['linear_terms']
+        user_factors = rec.coefficients['id']['factors']
+        item_intercept = rec.coefficients['variable']['linear_terms']
+        item_factors = rec.coefficients['variable']['factors']
+        intercept = rec.coefficients['intercept']
+        return user_intercept, user_factors, item_intercept, item_factors, intercept
+
+    song_ui, song_ufactors, song_ii, song_ifactors, song_i = get_coeffs(songs_rec)
+    movie_ui, movie_ufactors, movie_ii, movies_ifactors, movie_i = get_coeffs(movies_rec)
