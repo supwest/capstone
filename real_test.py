@@ -387,3 +387,9 @@ if __name__ == '__main__':
 
     song_ui, song_ufactors, song_ii, song_ifactors, song_i = get_coeffs(songs_rec)
     movie_ui, movie_ufactors, movie_ii, movies_ifactors, movie_i = get_coeffs(movies_rec)
+
+    comb = np.dot(np.array(movie_ufactors). np.array(song_ifactors).T)
+    a = comb[0]+song_ii
+    a = a + movie_ui[0]
+    a = a + np.mean([song_i, movie_i])
+    print songs.items[np.argsort(a)[::-1]]
