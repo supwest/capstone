@@ -388,8 +388,18 @@ if __name__ == '__main__':
     song_ui, song_ufactors, song_ii, song_ifactors, song_i = get_coeffs(songs_rec)
     movie_ui, movie_ufactors, movie_ii, movies_ifactors, movie_i = get_coeffs(movies_rec)
 
-    comb = np.dot(np.array(movie_ufactors). np.array(song_ifactors).T)
+    comb = np.dot(np.array(movie_ufactors), np.array(song_ifactors).T)
     a = comb[0]+song_ii
     a = a + movie_ui[0]
     a = a + np.mean([song_i, movie_i])
     print songs.items[np.argsort(a)[::-1]]
+
+    def gl_predictor(user_rec, item_rec, user_id):
+        user_intercept, user_factors, _, _, u_intercept = get_coeffs(user_rec)
+        _, _, item_intercept, item_factors, i_intercept = get_coeffs(item_rec)
+
+        mat = np.dot(np.array(user_factors), np.array(item_factors).T)
+        user_vec = mat[user_id] + item_intercept
+        user_vec = user_vec + user_intercept[user_id]
+        user_vec = user_vec + np.mean([u_intercept, i_intercept])
+        return user_vec
