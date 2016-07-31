@@ -2,6 +2,7 @@
 $(function() {
 	console.log('jq is working');
 	createVis();
+    //createDend();
 });
 
 function createVis() {
@@ -19,8 +20,8 @@ function createVis() {
 var color=d3.scaleOrdinal(d3.schemeCategory20);
 
 var simulation = d3.forceSimulation()
-	.force("link", d3.forceLink().id(function(d) { return d.id; }).strength(function(d) { return Math.sqrt(d.value)/500; }))
-	.force("charge", d3.forceManyBody().strength(function() { return -100; }))
+	.force("link", d3.forceLink().id(function(d) { return d.id; }).strength(function(d) { return Math.sqrt(d.value)/150; }))
+	.force("charge", d3.forceManyBody().strength(function() { return -70; }))
 	.force("center", d3.forceCenter(width / 2, height / 2));
 	
 d3.json("/data", function(error, graph) {
@@ -85,3 +86,15 @@ function dragended(d) {
 	d.fy = null;
 }
 }
+
+//function createDend() {
+//    var svg = d3.select("svg"),
+//    width = +svg.attr("width"),
+//    height = +svg.attr("height"),
+//    g = svg.append(g).attr("transform", "translate(40,0)");
+//
+//    var tree = d3.cluster().size([height, width = 160]);
+//
+//    var stratify = d3.stratify().parentId(function(d) { return d.id.substring(0m 
+
+//}
