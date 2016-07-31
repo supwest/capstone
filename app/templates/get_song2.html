@@ -63,13 +63,33 @@
 			<div class="col-lg-6 col-lg-offset-3">
 				<div id="carousel-example-generic" class="carousel slide" data-ride="carousel">
                     <form action="{{ url_for('get_updated_song_recs') }}" method='POST'>
-                        <input type='radio' name='rating' value='1'>1
-                        <input type='radio' name='rating' value='2'>2
-                        <input type='radio' name='rating' value='3'>3
-                        <input type='radio' name='rating' value='4'>4
-                        <input type='radio' name='rating' value='5'>5<br>
+                        <table>
+                            <tr>
+                                <th>Movie</th>
+                                <th>Rating</th>
+                            </tr>
+
+                        {% for movie in movies %}
+                        <tr>
+                            <td>{{ movies[movie] }}</td>
+                            <td><fieldset>
+                                    <input type='radio' name='{{ movie }}' value='-1' checked>No Rating
+                        <input type='radio' name='{{ movie }}' value='1'>1
+                        <input type='radio' name='{{ movie }}' value='2'>2
+                        <input type='radio' name='{{ movie }}' value='3'>3
+                        <input type='radio' name='{{ movie }}' value='4'>4
+                        <input type='radio' name='{{ movie }}' value='5'>5</fieldset></td>
+                        </tr>
+                        {% endfor %}
+                        </table>
+                        <select name='n_features'>
+                            {% for i in n_feats %}
+                            <option value='{{ i }}'>{{ i }}</option>
+                            {% endfor %}
+                        </select>
                         <button type='submit' class='btn btn-warning btn-lg'>Show Me</button>
-                    </form>
+
+                                            </form>
                     {% block show_song %}{% endblock %}
 				  <!-- Indicators -->
                   <!--
@@ -100,7 +120,9 @@
         </section>
 	</div><!--/container -->
 
-
+    <div class='chart'>
+        <script src='static/d3_vis.min.js' charset='utf-8'></script>
+    </div>
 
 
 

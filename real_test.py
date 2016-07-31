@@ -8,6 +8,9 @@ from numpy.linalg import svd
 import cPickle as pickle
 #from fancyimpute import NuclearNormMinimization, KNN, BiScaler, SoftImpute, SimpleFill, IterativeSVD
 import graphlab as gl
+import json
+from sklearn.cluster import AgglomerativeClustering as AC
+from sklearn.metrics import pairwise_distances
 
 def matrix_concat(m1, m2, axis=0):
     '''
@@ -346,11 +349,16 @@ if __name__ == '__main__':
     eighties_values = [a for a in eighties_songs.columns[1:]]
     current_values = [a for a in current_songs.columns[1:]]
     movies_df = movies.matrix
+    
+    gl.SFrame(movies_df).save('data/flask_movies_sf')
+
     ids = [i for i in movies_df.index]
     movies_df.insert(0, 'id', ids)
     movies_values = [a for a in movies_df.columns[1:]]
 
     songs_df = songs.matrix
+    gl.SFrame(songs_df).save('data/flask_songs_sf')
+    #songs_sf.save('/data/flask_songs_sf')
     ids = [i for i in songs_df.index]
     songs_df.insert(0, 'id', ids)
     songs_values = [a for a in songs_df.columns[1:]]
@@ -403,3 +411,40 @@ if __name__ == '__main__':
         user_vec = user_vec + user_intercept[user_id]
         user_vec = user_vec + np.mean([u_intercept, i_intercept])
         return user_vec
+
+
+
+    '''
+    code for clustering songs and movies
+    '''
+    movies_factors = movies.V.T
+    songs_factors=songs.V.T
+    m_factor_df = pd.DataFrame(movies_factors, index=movies.items)
+    m_factor_df.rename(columns = lambda x: 'factor_'+str(x))
+    s_factor_df = pd.DataFrame(songs_factors, index=songs.items)
+    s_factor_df.rename(columns=lambda x: 'factor_'+str(x))
+    cluster_df = pd.concat([m_factor_df, s_factor_df])
+    #with open('data/cluster_df.pkl', 'w') as f:
+    #    pickle.dump(cluster_df, f)
+    cluster_df.to_pickle('data/cluster_df.pkl') #for flask_app to read
+    n_clusters = 4
+    clust = AC(affinity='cosine', n_clusters=n_clusters, linkage='average')
+    clusters = clust.fit(cluster_df)
+
+    node_list = [{"id":cluster_df.index[x], "group":clusters.labels_[x]} for x in xrange(cluster_df.shape[0])]
+    link_list = []
+    dists = pairwise_distances(cluster_df, metric='euclidean')
+    items=[x for x in cluster_df.index]
+    for idx, n in enumerate(items):
+        if idx < len(items):
+            targets = [item for item in items[idx+1:]]
+            for idx2, n2 in enumerate(targets):
+                #value = int(round(dists[idx, idx2],1)*10)
+                value = dists[idx, idx2]
+                link_list.append({"source":n, "target":n2, "value":value})
+
+    force_dict = {"nodes":node_list, "links":link_list}
+    with open('app/static/clusters.json', 'w') as f:
+        json.dump(force_dict, f)
+            
+        

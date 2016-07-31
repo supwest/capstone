@@ -1,8 +1,35 @@
-from flask import Flask, render_template, request, url_for
+from flask import Flask, render_template, request, url_for, jsonify
 import cPickle as pickle
 import numpy as np
-
+import graphlab as gl
+import pandas as pd
+from sklearn.cluster import AgglomerativeClustering as AC, DBSCAN
+import json
 app = Flask(__name__)
+
+movie_dict={'inside_out':'Inside Out',
+            'get_hard':'Get Hard',
+            'star_wars':'Star Wars: The Force Awakens',
+            'fast_7':'Fast 7',
+            'the_fault_in_our_stars':'The Fault in Our Stars',
+            'the_martian':'The Martian',
+            'the_lego_movie':'The Lego Movie',
+            'the_revenant':'The Revenant',
+            'ted_2':'Ted 2',
+            'mad_max_fury_road':'Mad Max: Fury Road'
+            }
+
+movie_order_dict={'inside_out':9,
+            'get_hard':0,
+            'star_wars':2,
+            'fast_7':7,
+            'the_fault_in_our_stars':3,
+            'the_martian':1,
+            'the_lego_movie':5,
+            'the_revenant':4,
+            'ted_2':6,
+            'mad_max_fury_road':8
+            }
 
 def get_movies(song):
     #return str(song)
@@ -55,7 +82,59 @@ def get_movie_recommended_songs(movie):
     song_recs = song_titles[np.argsort(rec_matrix[movie_dict[movie]])[::-1]]
     return song_recs
 
+def get_rec_coeffs(rec):
+    user_intercept = rec.coefficients['id']['linear_terms']
+    user_factors = rec.coefficients['id']['factors']
+    item_intercept = rec.coefficients['variable']['linear_terms']
+    item_factors = rec.coefficients['variable']['factors']
+    intercept = rec.coefficients['intercept']
+    return user_intercept, user_factors, item_intercept, item_factors, intercept
 
+def get_song_recs(ratings, n_features):
+    path_to_songs_sf = '/home/cully/Documents/capstone/data/flask_songs_sf'
+    path_to_movies_sf = '/home/cully/Documents/capstone/data/flask_movies_sf'
+    songs_sf = gl.load_sframe(path_to_songs_sf)
+    songs_df = songs_sf.to_dataframe()
+    value_vars = [x for x in songs_df.columns if x != 'id']
+    ids = [x for x in songs_df.index]
+    if 'id' not in songs_df.columns:
+        songs_df.insert(0, 'id', ids)
+    songs_melted = gl.SFrame(pd.melt(songs_df, id_vars = 'id', value_vars=value_vars))
+    songs_rec = gl.factorization_recommender.create(songs_melted, user_id = 'id', item_id='variable', target='value', num_factors = n_features)
+    _, _, songs_item_intercept, songs_item_factors, songs_intercept = get_rec_coeffs(songs_rec)
+    movies_sf = gl.load_sframe(path_to_movies_sf)
+    movies_df = movies_sf.to_dataframe()
+    
+    value_vars = [x for x in movies_df.columns if x != 'id']
+    #new_ratings = [int(x) if x != '9' else np.nan for x in ratings]
+
+    new_ratings = {movie_dict[name]:int(ratings[name]) for name in ratings}
+    new_df = pd.DataFrame.from_dict(new_ratings, orient='index').replace(9,np.nan)
+    #new_ratings = np.array(new_ratings).reshape(10,1)
+    #new_df = pd.DataFrame([new_ratings], dtype='float')
+    #new_df.columns = movies_df.columns
+    movies_df = pd.concat([movies_df, new_df])
+    ids = [str(i) for i in movies_df.index]
+    #if 'id' not in songs_df.columns:
+    movies_df.insert(0, 'id', ids)
+    movies_melted = gl.SFrame(pd.melt(movies_df, id_vars='id', value_vars=value_vars)).dropna()
+    movies_rec = gl.factorization_recommender.create(movies_melted, user_id='id', item_id='variable', target='value', num_factors=n_features)
+    movies_user_intercept, movies_user_factors, _, _, movies_intercept = get_rec_coeffs(movies_rec)
+    comb = np.dot(np.array(movies_user_factors)[0], np.array(songs_item_factors).T)
+    comb = comb + songs_item_intercept
+    comb = comb + movies_user_intercept[0]
+    comb = comb + np.mean([movies_intercept, songs_intercept])
+    return songs_df.columns[1:][np.argsort(comb)[::-1]]
+    #return comb
+def get_data():
+    with open('static/clusters.json', 'r') as f:
+        g = f.read()
+    #graph_dict = json.loads('static/clusters.json')
+    #RESULTS = {'children': []}
+    #for k in graph_dict:
+    #    RESULTS['children'].append({graph_dict[k]})
+    return g
+    
 @app.route('/')
 @app.route('/home')
 def index():
@@ -92,12 +171,33 @@ def movie_song_recs():
 @app.route('/get_song2', methods=['GET','POST'])
 def get_updated_song_recs():
     if request.method == 'POST':
-        rating = (request.form['rating'])
+        ratings = ({m:request.form[m] for m in movie_dict})
+        n_features = request.form['n_features']
+        r = get_song_recs(ratings, n_features)
+        #ratings = {}
+        #for m in movie_list:
+        #    ratings[m] = (request.form[m])
         #recommendations = get_song_recommendations(rating)
         recommendations = 'song'
-        return render_template('get_song_recs_2.html', song=recommendations)
-    return render_template('get_song2.html')
+        return render_template('get_song_recs_2.html', song=r)
+    return render_template('get_song2.html', movies=movie_dict, n_feats = [n+1 for n in xrange(8)], nums = [str(n) for n in xrange(8)])
 
+@app.route('/clusters')
+def show_clusters():
+    cluster_df = pd.read_pickle('/home/cully/Documents/capstone/data/cluster_df.pkl')
+    clust = AC(n_clusters=4, affinity='cosine', linkage='average')
+    clusters=clust.fit(cluster_df)
+    j = {}
+    #for x in xrange(4):
+    #    j[x] = cluster_df.index[clusters.labels_==x]
+    #    print cluster_df.index[clusters.labels_==x]
+    #json.dumps(j)
+    return render_template('clusters.html')
+
+@app.route('/data')
+def data():
+    return get_data()
+    #return jsonify(get_data())
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8000, debug=True, threaded=True)

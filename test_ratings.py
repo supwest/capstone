@@ -54,11 +54,18 @@ if __name__ == '__main__':
     movie_suggestions = movies[np.argsort(pred_movies)]
     movie_actual = movies[np.argsort(movie_mat)]
 
+    movie_song_matrix = np.dot(movies_V.T, np.dot(np.diag(movies_s), songs_V))
+
     with open('data/actual_movies.pkl', 'w') as f:
         pickle.dump(movies_df, f)
     with open('data/actual_songs.pkl', 'w') as f:
         pickle.dump(songs_df, f)
 
+    with open('data/song_titles.pkl', 'w') as f:
+        pickle.dump(songs, f)
+
+    with open('data/movie_song_matrix.pkl', 'w') as f:
+        pickle.dump(movie_song_matrix, f)
     '''
     song to movie comparison
     '''
