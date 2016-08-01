@@ -101,7 +101,7 @@ function dragended(d) {
 //}
 //
 
-/* function createVis2() {
+function createVis2() {
     var width = 960,
     height = 500,
     padding = 1.5,
@@ -111,9 +111,9 @@ function dragended(d) {
     var num_clusters = 4;
 
     var color = d3.scale.category10()
-        .domain(d3.range(m));
+        .domain(d3.range(num_clusters));
 
-    var clusters = new Array(m);
+    var clusters = new Array(num_clusters);
 
     var svg = d3.select("body").append("svg").attr("width", width)
         .attr("height", height);
@@ -160,6 +160,47 @@ function dragended(d) {
 
     function cluster(alpha) {
        return function(d) {
-          var cluster = clusters[d.cluster] 
-    } 
-}*/
+          var cluster = clusters[d.cluster]
+          if (cluster === d) return;
+          var x = d.x - cluster.x,
+          y = d.y - cluster.y,
+          l = Math.sqrt(x * x + y * y),
+          r = d.radius + cluster.radius
+          if (l != r) {
+            l = (l - r) / l * alpha;
+            d.x -= x *= l;
+            x.y -= y *= l;
+            cluster.x += x;
+            cluster.y += y;
+          }
+    }; 
+}
+
+    function collide(alpha) {
+        var quadtree = d3.geom.quadtree(nodes);
+        return function (d) {
+            var r = d.radius + maxRadius + Math.max(padding, clusterPadding),
+                nx1 = d.x - r,
+                nx2 = d.x + r,
+                ny1 = d.y - r,
+                ny2 = d.y + r;
+            quadtree.visit(function(quad, x1, y1, x2, y2) {
+                if (quad.point && (quad.point !== d)) {
+                    var x = d.x - quad.point.x,
+                        y = d.y - quad.point.y,
+                        l = Math.sqrt(x*x + y*y),
+                        r = d.radius + quad.point.radius + (d.cluster === quad.point.cluster ? padding : clusterPadding);
+                    if (l < r) {
+                        l = (l - r) / l * alpha;
+                        d.x -= x *= l;
+                        d.y -= y *= l;
+                        quad.point.x += x;
+                        quad.point.y += y;
+                    }
+                }
+                return x1 > nx2 || x2 < nx1 || y1 > ny2 || y2 < ny1;
+            });
+    };
+    }
+
+}
