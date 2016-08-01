@@ -3,6 +3,7 @@ $(function() {
 	console.log('jq is working');
 	createVis();
     //createDend();
+    //createVis2();
 });
 
 function createVis() {
@@ -98,3 +99,67 @@ function dragended(d) {
 //    var stratify = d3.stratify().parentId(function(d) { return d.id.substring(0m 
 
 //}
+//
+
+/* function createVis2() {
+    var width = 960,
+    height = 500,
+    padding = 1.5,
+    clusterPadding = 6,
+    maxRadius = 12;
+
+    var num_clusters = 4;
+
+    var color = d3.scale.category10()
+        .domain(d3.range(m));
+
+    var clusters = new Array(m);
+
+    var svg = d3.select("body").append("svg").attr("width", width)
+        .attr("height", height);
+
+    d3.json('/data2', function (error, graph) {
+
+        d3.layout.pack().sort(null).size([width, height])
+            .children(function(d) { return d.values; })
+            .value(function(d) { return d.rating; })
+            .nodes({values: d3.nest()
+                .key(function(d) {return d.cluster; })
+                .entries(graph.nodes)});
+
+        var force = d3.layout.force()
+            .nodes(graph.nodes)
+            .size([width, height])
+            .gravity(.02)
+            .charge(0)
+            .on("tick", tick)
+            .start();
+
+        var node = svg.selectAll("circle")
+            .data(graph.nodes)
+            .enter().append("circle")
+            .style("fill", function(d) { return color(d.cluster); })
+            .call(force.drag);
+
+        node.transition()
+            .duration(750)
+            .delay(function(d, i) {return i*5})
+            .attrTween("r", function(d) {
+                var i =d3.interpolate(0, d.radius);
+                return function(t) {return d.radius = i(t); };
+            })'=;
+
+    }
+
+    function tick(e) {
+        node.each(cluster(10 * e.alpha * e.alpha))
+            .each(collide(.5))
+            .attr("cx", function(d) { return d.x })
+            .attr("cy", function(d) { return d.y });
+    }
+
+    function cluster(alpha) {
+       return function(d) {
+          var cluster = clusters[d.cluster] 
+    } 
+}*/
