@@ -31,6 +31,28 @@ movie_order_dict={'inside_out':9,
             'mad_max_fury_road':8
             }
 
+song_titles_dict = {'bad_blood':['Bad Blood', 'Taylor Swift',''], 
+                    'lets_dance':["Let's Dance", "David Bowie",''],
+                    'hotline_bling':["Hotline Bling", "Drake",''],
+                    "panda":["Panda", "Desiigner"],
+                    "stressed_out":["Stressed Out", "Twenty One Pilots",''],
+                    "rock_me_amadeus":["Rock Me Amadeus", "Falco",''],
+                    "dont_let_me_down":["Don't Let Me Down", "The Chainsmokers"],
+                    "hands_to_myself":["Hands to Myself", "Selena Gomez",''],
+                    "sorry":["Sorry", "Justin Beiber",''],
+                    "fancy":["Fancy", "Iggy Azalea",''],
+                    "work_from_home":["Work From Home", "Fifth Harmony",''],
+                    "trap_queen":["Trap Queen", "Fetty Wap",''],
+                    "come_on_eileen":["Come on Eileen", "Dexy's Midnight Runenrs",''],
+                    "when_doves_cry":["When Doves Cry", "Prince",''],
+                    "sweet_child_o_mine":["Sweet Child O' Mine", "Guns N' Roses",''],
+                    "billie_jean":["Billie Jean", "Michael Jackson",'<iframe style="width:120px;height:240px;" marginwidth="0" marginheight="0" scrolling="no" frameborder="0" src="//ws-na.amazon-adsystem.com/widgets/q?ServiceVersion=20070822&OneJS=1&Operation=GetAdHtml&MarketPlace=US&source=ac&ref=tf_til&ad_type=product_link&tracking_id=culwes-20&marketplace=amazon&region=US&placement=B0013DA95O&asins=B0013DA95O&linkId=8570d31fd5df8b048300096c3b917c1f&show_border=false&link_opens_in_new_window=false&price_color=333333&title_color=0066c0&bg_color=ffffff"></iframe>'],
+                    "every_breath_you_take":["Every Breath You Take", "The Police",''],
+                    "call_me":["Call Me", "Blondie",''],
+                    "another_one_bites_the_dust":["Another One Bites the Dust", "Queen",''],
+                    "centerfold":["Centerfold", "J. Geils Band",'']}
+
+
 def get_movies(song):
     #return str(song)
     song_dict = {'bad_blood':0, 'stressed_out':1, 'panda':5, 'rock_me_amadeus':10, 'dont_let_me_down':2, 'hotline_bling':3, 'hands_to_myself':4, 'work_from_home':6, 'trap_queen':7, 'sorry':8, 'fancy':9, 'come_on_eileen':11, 'when_doves_cry':12, 'sweet_child_o_mine':13, 'billie_jean':14, 'every_breath_you_take':15, 'call_me':16, 'another_one_bites_the_dust':17, 'centerfold':18, 'lets_dance':19}
@@ -134,6 +156,11 @@ def get_data():
     #for k in graph_dict:
     #    RESULTS['children'].append({graph_dict[k]})
     return g
+
+def get_data_2():
+    with open('static/cluster2.json', 'r') as f:
+        g = f.read()
+    return g
     
 @app.route('/')
 @app.route('/home')
@@ -145,7 +172,7 @@ def recommender():
     if request.method == 'POST':
         song = (request.form['song'])
         recommendations, images = get_movies(song)
-        return render_template('get_movie_recs.html', movie1=recommendations[0], image1=images[0], movie2=recommendations[1], image2=images[1], movie3=recommendations[2], image3=images[2])
+        return render_template('get_movie_recs.html', movie1=recommendations[0], image1=images[0], movie2=recommendations[1], image2=images[1], movie3=recommendations[2], image3=images[2], song=song_titles_dict[song])
     return render_template('get_movie.html')
 
 @app.route('/get_song', methods=["GET",'POST'])
@@ -172,21 +199,21 @@ def movie_song_recs():
 def get_updated_song_recs():
     if request.method == 'POST':
         ratings = ({m:request.form[m] for m in movie_dict})
-        n_features = request.form['n_features']
-        r = get_song_recs(ratings, n_features)
+        #n_features = request.form['n_features']
+        n_features = 8
+        recommendations = get_song_recs(ratings, n_features)
         #ratings = {}
         #for m in movie_list:
         #    ratings[m] = (request.form[m])
         #recommendations = get_song_recommendations(rating)
-        recommendations = 'song'
-        return render_template('get_song_recs_2.html', song=r)
+        return render_template('get_song_recs_2.html', songs=recommendations[:5])
     return render_template('get_song2.html', movies=movie_dict, n_feats = [n+1 for n in xrange(8)], nums = [str(n) for n in xrange(8)])
 
 @app.route('/clusters')
 def show_clusters():
-    cluster_df = pd.read_pickle('/home/cully/Documents/capstone/data/cluster_df.pkl')
-    clust = AC(n_clusters=4, affinity='cosine', linkage='average')
-    clusters=clust.fit(cluster_df)
+    #cluster_df = pd.read_pickle('/home/cully/Documents/capstone/data/cluster_df.pkl')
+    #clust = AC(n_clusters=4, affinity='cosine', linkage='average')
+    #clusters=clust.fit(cluster_df)
     j = {}
     #for x in xrange(4):
     #    j[x] = cluster_df.index[clusters.labels_==x]
@@ -199,5 +226,12 @@ def data():
     return get_data()
     #return jsonify(get_data())
 
+@app.route('/clusters2')
+def show_clusters2():
+    return render_template('clusters2.html')
+
+@app.route('/data2')
+def data_2():
+    return get_data_2()
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8000, debug=True, threaded=True)

@@ -10,6 +10,7 @@ import cPickle as pickle
 import graphlab as gl
 import json
 from sklearn.cluster import AgglomerativeClustering as AC
+from sklearn.cluster import KMeans
 from sklearn.metrics import pairwise_distances
 
 def matrix_concat(m1, m2, axis=0):
@@ -447,4 +448,19 @@ if __name__ == '__main__':
     with open('app/static/clusters.json', 'w') as f:
         json.dump(force_dict, f)
             
+    km = KMeans(n_clusters = 3)
+    km.fit(cluster_df)
+    movies_mean_df = pd.DataFrame(np.mean(movies.matrix.ix[:, 1:]))
+    songs_mean_df = pd.DataFrame(np.mean(songs.matrix.ix[:, 1:]))
+    mean_ratings = pd.concat([movies_mean_df, songs_mean_df]).rename(columns={0:'rating'})
+    mean_ratings['cluster'] = km.labels_
+    cluster_list = {}
+    node_list = []
+    for idx, name in enumerate(mean_ratings.index):
+        #node = {"id":name, "rating":round(mean_ratings.loc[name]['rating'],2), "cluster":int(mean_ratings.loc[name]['cluster'])}
+        node = {"rating":round(mean_ratings.loc[name]['rating'],2), "cluster":int(mean_ratings.loc[name]['cluster'])}
+        node_list.append(node)
+    cluster_list = {"nodes":node_list}
+    with open('app/static/cluster2.json', 'w') as f:
+        json.dump(cluster_list, f)
         

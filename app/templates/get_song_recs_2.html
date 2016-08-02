@@ -1,8 +1,15 @@
 {% extends "get_song2.html" %}
-{% block show_song %}
-{% for s in song %}
+{% block get_form %}
 
-<h4>{{ s }}</h4>
+{% endblock %}
+{% block show_songs %}
+<h1>Based on your movie preferences, you might enjoy these songs:</h1>
+
+{% for s in songs %}
+
+<h2>{{ s }}</h2>
+
 
 {% endfor %}
+<a href='/get_song2' class='btn btn-warning btn-lg'>Again</a>
 {% endblock %}

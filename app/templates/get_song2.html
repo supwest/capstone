@@ -53,15 +53,16 @@
 	<div class="container">
 		<div class="row mt centered">
 			<div class="col-lg-6 col-lg-offset-3">
+                {% block get_form %}
 				<h1>Which Song?</h1>
-				<h3>Rate this movie from 1 to 5 to get your song recommendations</h3>
+				<h3>Rate these movies to get your song recommendations</h3>
 			</div>
 		</div><!-- /row -->
         
 		<!-- CAROUSEL -->
 		<div class="row mt centered">
 			<div class="col-lg-6 col-lg-offset-3">
-				<div id="carousel-example-generic" class="carousel slide" data-ride="carousel">
+                <div id="carousel-example-generic" class="carousel slide" data-ride="carousel">
                     <form action="{{ url_for('get_updated_song_recs') }}" method='POST'>
                         <table>
                             <tr>
@@ -73,25 +74,27 @@
                         <tr>
                             <td>{{ movies[movie] }}</td>
                             <td><fieldset>
-                                    <input type='radio' name='{{ movie }}' value='-1' checked>No Rating
+                                    <!-- <input type='radio' name='{{ movie }}' value='-1' checked>No Rating -->
                         <input type='radio' name='{{ movie }}' value='1'>1
                         <input type='radio' name='{{ movie }}' value='2'>2
-                        <input type='radio' name='{{ movie }}' value='3'>3
+                        <input type='radio' name='{{ movie }}' value='3' checked>3
                         <input type='radio' name='{{ movie }}' value='4'>4
                         <input type='radio' name='{{ movie }}' value='5'>5</fieldset></td>
                         </tr>
                         {% endfor %}
                         </table>
-                        <select name='n_features'>
+                     <!--   <select name='n_features'>
                             {% for i in n_feats %}
                             <option value='{{ i }}'>{{ i }}</option>
                             {% endfor %}
-                        </select>
+                     </select> -->
                         <button type='submit' class='btn btn-warning btn-lg'>Show Me</button>
 
                                             </form>
-                    {% block show_song %}{% endblock %}
-				  <!-- Indicators -->
+                                            {% endblock %}
+                    {% block show_songs %}{% endblock %}
+		
+        <!-- Indicators -->
                   <!--
 				  <ol class="carousel-indicators">
 				    <li data-target="#carousel-example-generic" data-slide-to="0" class="active"></li>

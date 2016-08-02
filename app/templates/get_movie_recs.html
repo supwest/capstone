@@ -1,4 +1,10 @@
 {% extends "get_movie.html" %}
+{% block name %}
+
+<h1>These movies are most similar to {{ song[0] }} by {{ song[1] }}</h1>
+
+{% endblock %}
+
 {% block rec1 %}
 
 <h4>1 {{movie1}}</h4>
