@@ -131,7 +131,7 @@ def get_song_recs(ratings, n_features):
     #new_ratings = [int(x) if x != '9' else np.nan for x in ratings]
 
     new_ratings = {movie_dict[name]:int(ratings[name]) for name in ratings}
-    new_df = pd.DataFrame.from_dict(new_ratings, orient='index').replace(9,np.nan)
+    new_df = pd.DataFrame.from_dict(new_ratings, orient='index').replace(-1,np.nan)
     #new_ratings = np.array(new_ratings).reshape(10,1)
     #new_df = pd.DataFrame([new_ratings], dtype='float')
     #new_df.columns = movies_df.columns
