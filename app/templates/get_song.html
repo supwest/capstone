@@ -52,6 +52,7 @@
    	<div class="container">
 		<div class="row mt centered">
 			<div class="col-lg-6 col-lg-offset-3">
+			{% block get_movies %}
 				<h1>Have a movie recommend some songs for you</h1>
 				<h2>Choose a movie to find out its recommendations</h2>
 			</div>
@@ -59,7 +60,7 @@
 		
 		<div class="row mt centered">
                 <div class="row mt centered">
-                    {% block one %}{% endblock %}
+                  
                 </div><!-- /row -->
 
             <form action = '{{ url_for("movie_song_recs") }}' method='POST'>
@@ -71,7 +72,10 @@
                 </select>
                 <button type="submit" class='btn btn-warning btn-lg'>Show Me</button>
             </form>
-				</div><!-- /row -->
+				
+		{% endblock %}
+		{% block one %}{% endblock %}
+			</div><!-- /row -->
                	</div><!-- /container --> 
 
     <!-- Bootstrap core JavaScript

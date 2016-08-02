@@ -62,9 +62,9 @@
 		<!-- CAROUSEL -->
 		<div class="row mt centered">
 			<div class="col-lg-6 col-lg-offset-3">
-                <div id="carousel-example-generic" class="carousel slide" data-ride="carousel">
+              <!-- <div id="carousel-example-generic" class="carousel slide" data-ride="carousel"> -->
                     <form action="{{ url_for('get_updated_song_recs') }}" method='POST'>
-                        <table>
+                        <table sytle="margin:0px auto;">
                             <tr>
                                 <th>Movie</th>
                                 <th>Rating</th>
@@ -72,7 +72,7 @@
 
                         {% for movie in movies %}
                         <tr>
-                            <td>{{ movies[movie] }}</td>
+                            <td align="left">{{ movies[movie] }}</td>
                             <td><fieldset>
                                     <!-- <input type='radio' name='{{ movie }}' value='-1' checked>No Rating -->
                         <input type='radio' name='{{ movie }}' value='1'>1
@@ -119,7 +119,7 @@
 				</div>	
                 -->        
 			</div><!-- /col-lg-8 -->
-		</div><!-- /row -->
+		<!-- </div><!-- /row --> 
         </section>
 	</div><!--/container -->
 

@@ -1,10 +1,13 @@
 {% extends "get_song.html" %}
+{% block get_movies %}
+
+{% endblock %}
 {% block one %}
 <h2>{{ movie }} thinks you should listen to</h2>
-<ol>
+<br>
 {% for song in songs %}
-<b><li>{{ song }}</li></b>
+<h1 align='left'>{{ song }}</h1>
 {% endfor %}
-</ol>
+<a href='/get_song' class='btn btn-warning btn-lg'>Again</a>
 
 {% endblock %}
