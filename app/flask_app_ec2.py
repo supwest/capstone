@@ -142,10 +142,10 @@ def get_song_recs(ratings, n_features):
     movies_melted = gl.SFrame(pd.melt(movies_df, id_vars='id', value_vars=value_vars)).dropna()
     movies_rec = gl.factorization_recommender.create(movies_melted, user_id='id', item_id='variable', target='value', num_factors=n_features)
     movies_user_intercept, movies_user_factors, _, _, movies_intercept = get_rec_coeffs(movies_rec)
-    comb = np.dot(np.array(movies_user_factors)[0], np.array(songs_item_factors).T)
-    comb = comb + songs_item_intercept
-    comb = comb + movies_user_intercept[0]
-    comb = comb + np.mean([movies_intercept, songs_intercept])
+    comb = np.dot(np.array(movies_user_factors)[-1], np.array(songs_item_factors).T)
+    #comb = comb + songs_item_intercept
+    #comb = comb + movies_user_intercept[0]
+    #comb = comb + np.mean([movies_intercept, songs_intercept])
     return songs_df.columns[1:][np.argsort(comb)[::-1]]
     #return comb
 def get_data():
@@ -234,4 +234,4 @@ def show_clusters2():
 def data_2():
     return get_data_2()
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8000, threaded=True)
+    app.run(host='0.0.0.0', port=8000)

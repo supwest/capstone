@@ -131,23 +131,24 @@ def get_song_recs(ratings, n_features):
     #new_ratings = [int(x) if x != '9' else np.nan for x in ratings]
 
     new_ratings = {movie_dict[name]:int(ratings[name]) for name in ratings}
-    new_df = pd.DataFrame.from_dict(new_ratings, orient='index').replace(-1,np.nan)
+    new_df = pd.DataFrame.from_dict([new_ratings], orient='columns').replace(-1,np.nan)
     #new_ratings = np.array(new_ratings).reshape(10,1)
     #new_df = pd.DataFrame([new_ratings], dtype='float')
     #new_df.columns = movies_df.columns
-    movies_df = pd.concat([movies_df, new_df])
+    movies_df = pd.concat([movies_df, new_df]).reset_index(drop=True)
     ids = [str(i) for i in movies_df.index]
     #if 'id' not in songs_df.columns:
     movies_df.insert(0, 'id', ids)
     movies_melted = gl.SFrame(pd.melt(movies_df, id_vars='id', value_vars=value_vars)).dropna()
     movies_rec = gl.factorization_recommender.create(movies_melted, user_id='id', item_id='variable', target='value', num_factors=n_features)
     movies_user_intercept, movies_user_factors, _, _, movies_intercept = get_rec_coeffs(movies_rec)
-    comb = np.dot(np.array(movies_user_factors)[0], np.array(songs_item_factors).T)
-    comb = comb + songs_item_intercept
-    comb = comb + movies_user_intercept[0]
-    comb = comb + np.mean([movies_intercept, songs_intercept])
+    comb = np.dot(np.array(movies_user_factors)[-1], np.array(songs_item_factors).T)
+    #comb = comb + songs_item_intercept
+    #comb = comb + movies_user_intercept[-1]
+    #comb = comb + np.mean([movies_intercept, songs_intercept])
     return songs_df.columns[1:][np.argsort(comb)[::-1]]
     #return comb
+
 def get_data():
     with open('static/clusters.json', 'r') as f:
         g = f.read()
