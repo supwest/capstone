@@ -43,7 +43,7 @@ song_titles_dict = {'bad_blood':['Bad Blood', 'Taylor Swift',''],
                     "fancy":["Fancy", "Iggy Azalea",''],
                     "work_from_home":["Work From Home", "Fifth Harmony",''],
                     "trap_queen":["Trap Queen", "Fetty Wap",''],
-                    "come_on_eileen":["Come on Eileen", "Dexy's Midnight Runenrs",''],
+                    "come_on_eileen":["Come on Eileen", "Dexy's Midnight Runners",''],
                     "when_doves_cry":["When Doves Cry", "Prince",''],
                     "sweet_child_o_mine":["Sweet Child O' Mine", "Guns N' Roses",''],
                     "billie_jean":["Billie Jean", "Michael Jackson",'<iframe style="width:120px;height:240px;" marginwidth="0" marginheight="0" scrolling="no" frameborder="0" src="//ws-na.amazon-adsystem.com/widgets/q?ServiceVersion=20070822&OneJS=1&Operation=GetAdHtml&MarketPlace=US&source=ac&ref=tf_til&ad_type=product_link&tracking_id=culwes-20&marketplace=amazon&region=US&placement=B0013DA95O&asins=B0013DA95O&linkId=8570d31fd5df8b048300096c3b917c1f&show_border=false&link_opens_in_new_window=false&price_color=333333&title_color=0066c0&bg_color=ffffff"></iframe>'],
@@ -149,6 +149,29 @@ def get_song_recs(ratings, n_features):
     return songs_df.columns[1:][np.argsort(comb)[::-1]]
     #return comb
 
+def get_wine_recs(ratings):
+    path_to_movies = '/home/cully/Documents/capstone/data/flask_movies_sf'
+    path_to_wine = '/home/cully/Documents/capstone/data/gridsearch_sf'
+    wine_rec = gl.load_model(path_to_wine)
+    movies_sf = gl.load_sframe(path_to_movies)
+    movies_df = movies_sf.to_dataframe()
+    value_vars = [x for x in movies_df.columns if x != 'id']
+    new_ratings = {movie_dict[name]:int(ratings[name]) for name in ratings}
+    new_df = pd.DataFrame.from_dict([new_ratings], orient='columns').replace(-1, np.nan)
+    movies_df = pd.concat([movies_df, new_df]).reset_index(drop=True)
+    ids = [i for i in movies_df.index]
+    movies_df.insert(0, 'id', ids)
+    movies_melted = gl.SFrame(pd.melt(movies_df, id_vars='id', value_vars=value_vars)).dropna()
+    movies_rec = gl.factorization_recommender.create(movies_melted, user_id = 'id', item_id='variable', target='value')
+    movies_user_intercept, movies_user_factors, _, _, movies_intercept = get_rec_coeffs(movies_rec)
+    #_, _, wine_item_intercept, wine_item_factors, wine_intercept = get_rec_coeffs(wine_rec)
+    wine_item_factors = np.array(wine_rec.coefficients['wine_name']['factors'])[:,:8]
+    wine_names = np.array(wine_rec.coefficients['wine_name']['wine_name'])
+    comb = np.dot(np.array(movies_user_factors[-1]), wine_item_factors.T)
+    return wine_names[np.argsort(comb)[::-1]]
+
+#pass
+
 def get_data():
     with open('static/clusters.json', 'r') as f:
         g = f.read()
@@ -209,6 +232,16 @@ def get_updated_song_recs():
         #recommendations = get_song_recommendations(rating)
         return render_template('get_song_recs_2.html', songs=recommendations[:5])
     return render_template('get_song2.html', movies=movie_dict, n_feats = [n+1 for n in xrange(8)], nums = [str(n) for n in xrange(8)])
+
+@app.route('/get_wine', methods = ["GET","POST"])
+def get_wine():
+    if request.method == 'POST':
+        ratings = ({m:request.form[m] for m in movie_dict})
+        recommendations = get_wine_recs(ratings)
+        recs = [r.decode('utf-8', 'ignore') for r in recommendations]
+        return render_template('get_wine_recs.html', wines=recs[:5])
+    return render_template('get_wine.html', movies=movie_dict)
+
 
 @app.route('/clusters')
 def show_clusters():

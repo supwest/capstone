@@ -8,7 +8,7 @@
     <meta name="author" content="">
     <link rel="shortcut icon" href="assets/img/favicon.png">
 
-    <title>Mad Recs</title>
+    <title>The Matrix Recommends</title>
 
     <!-- Bootstrap core CSS -->
     <link href="../static/bootstrap.css" rel="stylesheet">
@@ -53,6 +53,7 @@
 	<div class="container">
 		<div class="row mt centered">
 			<div class="col-lg-6 col-lg-offset-3">
+                {% block get_form %}
 			<form action="{{ url_for('recommender') }}" method="POST">
 				<h1>Which Movie?</h1>
 				<h3>Select a song from the list to get movie recommendations.</h3>
@@ -83,8 +84,9 @@
 					<option value='lets_dance'>Let's Dance</option>
 					
 				</select>
-				<button type='submit' class="btn btn-warning btn-lg">I'm feelin it</button>
+				<button type='submit' class="btn btn-warning btn-lg">Show Me</button>
                 	</form> 
+                    {% endblock %}
 			</div>
 		</div><!-- /row -->
 	    {% block name %}{% endblock %}	
@@ -101,6 +103,9 @@
 			{% block rec3 %}{% endblock %}
 			</div><!--/col-lg-4 -->
 		</div><!-- /row -->
+        <div class="row mt centered">
+        {% block button %}{% endblock %}
+        </div>
 	</div><!-- /container -->
 	</section><!-- /section id=movie -->
 	<div class="container">

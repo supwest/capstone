@@ -1,26 +1,34 @@
 {% extends "get_movie.html" %}
+{% block get_form %}
+
+{% endblock%}
+
 {% block name %}
-
+<div class="row mt centered">
 <h1>These movies are most similar to {{ song[0] }} by {{ song[1] }}</h1>
-
+</div>
 {% endblock %}
 
 {% block rec1 %}
 
 <h4>1 {{movie1}}</h4>
-<img src={{image1}} width="255" height="378">
+<img src={{image1}} width="255" height="350">
 
 {% endblock %}
 
 {% block rec2 %}
 <h4> 2 {{movie2}}</h4>
-<img src={{image2}} width="255" height="378">
+<img src={{image2}} width="255" height="350">
 
 {% endblock %}
 
 {% block rec3 %}
 <h4> 3 {{movie3}}</h4>
-<img src={{image3}} width="255" height="378">
+<img src={{image3}} width="255" height="350">
 
+{% endblock %}
+
+{% block button %}
+<a href="/get_movie" class="btn btn-warning btn-lg">Again</a>
 {% endblock %}
 

@@ -54,8 +54,8 @@
 		<div class="row mt centered">
 			<div class="col-lg-6 col-lg-offset-3">
                 {% block get_form %}
-				<h1>Which Song?</h1>
-				<h3>Rate these movies to get your song recommendations</h3>
+				<h1>Which Wine?</h1>
+				<h3>Rate these movies to get your wine recommendations</h3>
 			</div>
 		</div><!-- /row -->
         
@@ -63,7 +63,7 @@
 		<div class="row mt centered">
 			<div class="col-lg-6 col-lg-offset-3">
               <!-- <div id="carousel-example-generic" class="carousel slide" data-ride="carousel"> -->
-                    <form action="{{ url_for('get_updated_song_recs') }}" method='POST'>
+                    <form action="{{ url_for('get_wine') }}" method='POST'>
                         <table sytle="margin:0px auto;">
                             <tr>
                                 <th>Movie</th>
@@ -92,7 +92,7 @@
 
                                             </form>
                                             {% endblock %}
-                    {% block show_songs %}{% endblock %}
+                    {% block show_wines %}{% endblock %}
 		
         <!-- Indicators -->
                   <!--
