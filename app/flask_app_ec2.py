@@ -150,8 +150,8 @@ def get_song_recs(ratings, n_features):
     #return comb
 
 def get_wine_recs(ratings):
-    path_to_movies = '/home/cully/Documents/capstone/data/flask_movies_sf'
-    path_to_wine = '/home/cully/Documents/capstone/data/gridsearch_sf'
+    path_to_movies = '/home/ubuntu/capstone/data/flask_movies_sf'
+    path_to_wine = '/home/ubuntu/capstone/data/gridsearch_sf'
     wine_rec = gl.load_model(path_to_wine)
     movies_sf = gl.load_sframe(path_to_movies)
     movies_df = movies_sf.to_dataframe()
