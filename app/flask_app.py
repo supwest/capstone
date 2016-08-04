@@ -5,6 +5,7 @@ import graphlab as gl
 import pandas as pd
 from sklearn.cluster import AgglomerativeClustering as AC, DBSCAN
 import json
+from sklearn.metrics import pairwise_distances
 app = Flask(__name__)
 
 movie_dict={'inside_out':'Inside Out',
@@ -170,7 +171,25 @@ def get_wine_recs(ratings):
     comb = np.dot(np.array(movies_user_factors[-1]), wine_item_factors.T)
     return wine_names[np.argsort(comb)[::-1]]
 
-#pass
+
+def get_wines_for_movie(movie):
+    path_to_wine = '/home/cully/Documents/capstone/data/gridsearch_sf'
+    path_to_movies = '/home/cully/Documents/capstone/data/flask_movies_sf'
+    wine_rec = gl.load_model(path_to_wine)
+    movies_sf = gl.load_sframe(path_to_movies)
+    cols = movies_sf.column_names()
+    #movies_sf = movies_sf.add_row_number()
+    movies_df = movies_sf.to_dataframe()
+    ids = [i for i in movies_df.index]
+    movies_df.insert(0, 'id', ids)
+    value_vars = [x for x in movies_df.columns if x != 'id']
+    movies_melted = gl.SFrame(pd.melt(movies_df, id_vars='id', value_vars=value_vars)).dropna()
+    movies_rec = gl.factorization_recommender.create(movies_melted, user_id='id', item_id='variable', target='value')
+    movie_pos = movie_order_dict[movie]
+    sims = pairwise_distances(np.array(movies_rec.coefficients['variable']['factors'])[movie_pos].reshape(1,-1), np.array(wine_rec.coefficients['wine_name']['factors'])[:,:8], metric='cosine')
+    wine_names = np.array(wine_rec.coefficients['wine_name']['wine_name'])
+    return wine_names[np.argsort(sims[0])[::-1]][:5]
+
 
 def get_data():
     with open('static/clusters.json', 'r') as f:
@@ -242,6 +261,27 @@ def get_wine():
         return render_template('get_wine_recs.html', wines=recs[:5])
     return render_template('get_wine.html', movies=movie_dict)
 
+
+@app.route('/get_wine2', methods=["GET","POST"])
+def get_wine_2():
+    movie_dict={'inside_out':'Inside Out',
+            'get_hard':'Get Hard',
+            'star_wars':'Star Wars: The Force Awakens',
+            'fast_7':'Fast 7',
+            'the_fault_in_our_stars':'The Fault in Our Stars',
+            'the_martian':'The Martian',
+            'the_lego_movie':'The Lego Movie',
+            'the_revenant':'The Revenant',
+            'ted_2':'Ted 2',
+            'mad_max_fury_road':'Mad Max: Fury Road'
+            }
+
+    if request.method == 'POST':
+        movie = (request.form['movie'])
+        recommendations = get_wines_for_movie(movie)
+        recs = [r.decode('utf-8', 'ignore') for r in recommendations]
+        return render_template('get_wine_recs_2.html', wines = recs, movie=movie_dict[movie])
+    return render_template('get_wine2.html', movies=movie_dict)
 
 @app.route('/clusters')
 def show_clusters():

@@ -1,0 +1,15 @@
+{% extends "get_wine2.html" %}
+{% block get_form %}
+
+{% endblock %}
+{% block show_wines %}
+<h3>These wines might pair well with {{ movie }}</h3>
+
+{% for w in wines %}
+
+<h1 align='left'>{{ w }}</h1>
+
+
+{% endfor %}
+<a href='/get_wine2' class='btn btn-warning btn-lg'>Again</a>
+{% endblock %}

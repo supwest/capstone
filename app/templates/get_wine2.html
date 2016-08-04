@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel="shortcut icon" href="assets/img/favicon.png">
+
+    <title>The Matrix Recommends</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="../static/bootstrap.css" rel="stylesheet">
+
+    <!-- Custom styles for this template -->
+    <link href="../static/main.css" rel="stylesheet">
+
+    <!-- Fonts from Google Fonts -->
+	<link href='http://fonts.googleapis.com/css?family=Lato:300,400,900' rel='stylesheet' type='text/css'>
+    
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+      <script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
+    <![endif]-->
+  </head>
+
+  <body>
+
+    <!-- Fixed navbar -->
+    <div class="navbar navbar-default navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="/home"><b>MATRIX</b></a>
+        </div>
+        <div class="navbar-collapse collapse">
+          <ul class="nav navbar-nav navbar-right">
+            <li><a href="/get_movie">Get a movie</a></li>
+            <li><a href="/get_song">Get a song</a></li>
+            <li><a href='/get_song2'>Get another song</a></li>
+          </ul>
+        </div><!--/.nav-collapse -->
+      </div>
+    </div>
+
+<section id='song'>
+	<div class="container">
+		<div class="row mt centered">
+			<div class="col-lg-6 col-lg-offset-3">
+                {% block get_form %}
+				<h1>Which Song?</h1>
+				<h3>pick a movie to get your wine recommendations</h3>
+			</div>
+		</div><!-- /row -->
+        
+		<!-- CAROUSEL -->
+		<div class="row mt centered">
+			<div class="col-lg-6 col-lg-offset-3">
+              <!-- <div id="carousel-example-generic" class="carousel slide" data-ride="carousel"> -->
+                    <form action="{{ url_for('get_wine_2') }}" method='POST'>
+                       <select name="movie">
+                        {% for movie in movies %}
+                        <option value="{{ movie }}">{{ movies[movie] }}</option>
+                        {% endfor %}
+                        
+                    
+                     </select>
+                        <button type='submit' class='btn btn-warning btn-lg'>Show Me</button>
+
+                                            </form>
+                                            {% endblock %}
+                    {% block show_wines %}{% endblock %}
+		
+        <!-- Indicators -->
+                  <!--
+				  <ol class="carousel-indicators">
+				    <li data-target="#carousel-example-generic" data-slide-to="0" class="active"></li>
+				    <li data-target="#carousel-example-generic" data-slide-to="1"></li>
+				    <li data-target="#carousel-example-generic" data-slide-to="2"></li>
+				  </ol>
+			    -->	
+				  <!-- Wrapper for slides -->
+                  <!--
+				   <div class="carousel-inner">
+
+				    <div class="item active">
+				      <img src="assets/img/p01.png" alt="">
+				    </div>
+				    <div class="item">
+				      <img src="assets/img/p02.png" alt="">
+				    </div>
+				    <div class="item">
+				      <img src="assets/img/p03.png" alt="">
+				    </div>
+				  </div>
+				</div>	
+                -->        
+			</div><!-- /col-lg-8 -->
+		<!-- </div><!-- /row --> 
+        </section>
+	</div><!--/container -->
+
+    <div class='chart'>
+        <script src='static/d3_vis.min.js' charset='utf-8'></script>
+    </div>
+
+
+
+
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="https://code.jquery.com/jquery-1.10.2.min.js"></script>
+    <script src="static/bootstrap.min.js"></script>
+  </body>
+</html>
