@@ -5,6 +5,7 @@ import graphlab as gl
 import pandas as pd
 from sklearn.cluster import AgglomerativeClustering as AC, DBSCAN
 import json
+from sklearn.metrics import pairwise_distances
 app = Flask(__name__)
 
 movie_dict={'inside_out':'Inside Out',
