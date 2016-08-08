@@ -12,6 +12,7 @@ import json
 from sklearn.cluster import AgglomerativeClustering as AC
 from sklearn.cluster import KMeans
 from sklearn.metrics import pairwise_distances
+from scipy.stats import spearmanr
 
 def matrix_concat(m1, m2, axis=0):
     '''
@@ -87,6 +88,7 @@ class Tester(object):
         self.matrix_2 = m2
         self.error_matrix = m1.matrix-m2.matrix
         self.mse = self._calc_mse(self.matrix_1.matrix, self.matrix_2.matrix)
+        #self.rank_corr = self._calc_rank_corr()
 
     def _calc_mse(self, matrix1, matrix2):
         '''
@@ -103,7 +105,12 @@ class Tester(object):
         #sq_e = e**2
         #sum_sq_e = np.mean(np.sum(sq_e))
         #self.error_ = sum_sq_e
-        return np.mean(np.square(ea)).mean()
+
+        #return np.mean(np.square(ea)).mean()
+        return np.mean(np.square(self.error_matrix)).mean()
+
+    def _calc_rank_corr(self):
+        return spearmanr(self.matrix_1.matrix, self.matrix_2.matrix, axis=1)
 
 
     def common_user_test(self, n_common=1):
@@ -152,6 +159,7 @@ class Tester(object):
         s1_test = Matrix(s1)
         s2_test = Matrix(s2)
         m2_pred = PredictedMatrix(m2_test, s1_test)
+
 
 
 def block_diagonal(m, s):
