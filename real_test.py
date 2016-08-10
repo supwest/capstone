@@ -190,6 +190,33 @@ def block_diagonal(m, s):
     temp_nan = pd.concat([t1_nan, t2_nan])
     return temp_nan, Matrix(temp_zeros), Matrix(full)
 
+def subset_matrix(mat, idx=None, how='top'):
+    '''
+    Takes Matrix object and returns a Matrix object made from a subset
+    of the input Matrix.
+    idx determines the size of the subset. If idx is not specified 
+    idx = mat.matrix.shape[0]/2
+    If how == 'top', subset_matrix returns mat.matrix[:idx]
+    else return mat.matrix[idx:]
+    '''
+    if idx is None:
+        idx = mat.matrix.shape[0]/2
+    if how == 'top':
+        return Matrix(mat.matrix[:idx])
+    else:
+        return Matrix(mat.matrix[idx:])
+
+def build_full_predicted_matrix(m1, m2):
+    '''
+    takes 2 Matrix objects returns a matrix of actual obsevations and
+    predictions
+    '''
+    pred_1 = PredictedMatrix(m1, m2)
+    pred_2 = PredictedMatrix(m2, m1)
+    pred_top = matrix_concat(m1, Matrix(pred_1.matrix), 1)
+    pred_bottom = matrix_concat(Matrix(pred_2.matrix), m2, 1)
+    return matrix_concat(pred_top, pred_bottom)
+
 if __name__ == '__main__':
     with open('data/actual_movies.pkl') as f:
         movies_df = pickle.load(f)
@@ -232,30 +259,26 @@ if __name__ == '__main__':
     '''
     build matrix out of full and predicted parts
     '''
-    idx = movies.matrix.shape[0]/2
-    m1 = movies.matrix[:idx]
-    s2 = songs.matrix[idx:]
-    m1_matrix = Matrix(m1)
-    s2_matrix = Matrix(s2)
+    #idx = movies.matrix.shape[0]/2
+    #m1 = movies.matrix[:idx]
+    #s2 = songs.matrix[idx:]
+    m1_matrix = subset_matrix(movies, idx=None)
+    s2_matrix = subset_matrix(songs, idx=None, how='bottom')
+
 
     pred_s1 = PredictedMatrix(m1_matrix, s2_matrix)
-    pred_m2 = PredictedMatrix(s2_matrix, m1_matrix)
-
-    pred_top = pd.concat([m1_matrix.matrix, pred_s1.matrix], axis=1)
-    pred_bottom = pd.concat([pred_m2.matrix, s2_matrix.matrix], axis=1)
-
-    pred_full = Matrix(pd.concat([pred_top, pred_bottom]))
-
+    pred_full = build_full_predicted_matrix(m1_matrix, s2_matrix)
     test3 = Tester(full, pred_full)
-    test3.mse
+    #test3.mse
 
 
     '''
     make interleaved full matrix
     '''
     df_zeros = pd.DataFrame(0, index=full.matrix.index, columns=full.matrix.columns)
-    m1_matrix = Matrix(m1)
-    s2_matrix = Matrix(s2)
+    m1_matrix = subset_matrix(movies, idx=None)
+    s2_matrix = subset_matrix(songs, idx=None)
+    #s2_matrix = Matrix(s2)
     m2_zeros = Matrix(pd.DataFrame(0, index=s2_matrix.matrix.index, columns=m1_matrix.matrix.columns))
     s1_zeros = Matrix(pd.DataFrame(0, index=m1_matrix.matrix.index, columns=s2_matrix.matrix.columns)) 
     top_matrix = matrix_concat(m1_matrix, s1_zeros, axis=1)
