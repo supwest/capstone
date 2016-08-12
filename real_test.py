@@ -115,10 +115,7 @@ class Tester(object):
 
     def common_user_test(self, n_common=1):
         '''
-        Somethings wrong in here.
-        fixed - The mse call returns the same thing before and after changing
-        need to use copies so doesn't really change underlying matrices
-        (run common_user_test with different nums in common to see problem)
+        
         '''
         m1, m2 = self.matrix_1.split()
         m1_temp = Matrix(m1.matrix.copy())
@@ -217,6 +214,26 @@ def build_full_predicted_matrix(m1, m2):
     pred_bottom = matrix_concat(Matrix(pred_2.matrix), m2, 1)
     return matrix_concat(pred_top, pred_bottom)
 
+
+def build_interleaved_matrix(m, s, fill='zero'):
+    cols = [c for c in np.concatenate([m.matrix.columns, s.matrix.columns]) if c != 'id']
+    
+    a_locs = m.matrix.index[xrange(0, m.matrix.shape[0], 2)]
+    b_locs = m.matrix.index[xrange(1, m.matrix.shape[0], 2)]
+    if fill == 'zero':
+        insert = np.hstack([m.matrix.loc[a_locs], np.zeros(s.matrix.loc[a_locs].shape)])
+        insert2 = np.hstack([np.zeros(m.matrix.loc[b_locs].shape), s.matrix.loc[b_locs]])
+    else:
+        insert = np.hstack([m.matrix.loc[a_locs], np.zeros(s.matrix.loc[a_locs].shape)*np.nan])
+        insert2 = np.hstack([np.zeros(m.matrix.loc[b_locs].shape)*np.nan, s.matrix.loc[b_locs]])
+
+    df1 = pd.DataFrame(insert, index=a_locs, columns=cols)
+    df2 = pd.DataFrame(insert2, index=b_locs, columns=cols)
+    return Matrix(pd.concat([df1, df2]).sort_index())    
+
+
+
+
 if __name__ == '__main__':
     with open('data/actual_movies.pkl') as f:
         movies_df = pickle.load(f)
@@ -225,12 +242,9 @@ if __name__ == '__main__':
 
     movies = Matrix(movies_df)
     songs = Matrix(songs_df)
-
     song_predictions = PredictedMatrix(movies, songs)
-
     test = Tester(songs, song_predictions)
     print test.mse
-
 
     '''
     Find MSE of Block Diagonal NaN Matrix
@@ -248,9 +262,6 @@ if __name__ == '__main__':
     #bd_filled = BiScaler().complete(bd)
     #bd_pred = np.dot(bd_U, np.dot(np.diag(bd_s), bd_V))
     #bd_pred = PredictedMatrix(bd, bd)
-    
-    
-
     #bd_pred = Matrix(bd_df)
     #test2 = Tester(full, bd_pred)
     #test2 = Tester(full, Matrix(bd))
@@ -259,60 +270,17 @@ if __name__ == '__main__':
     '''
     build matrix out of full and predicted parts
     '''
-    #idx = movies.matrix.shape[0]/2
-    #m1 = movies.matrix[:idx]
-    #s2 = songs.matrix[idx:]
     m1_matrix = subset_matrix(movies, idx=None)
     s2_matrix = subset_matrix(songs, idx=None, how='bottom')
-
-
     pred_s1 = PredictedMatrix(m1_matrix, s2_matrix)
     pred_full = build_full_predicted_matrix(m1_matrix, s2_matrix)
     test3 = Tester(full, pred_full)
     #test3.mse
 
-
-    '''
-    make interleaved full matrix
-    '''
-    df_zeros = pd.DataFrame(0, index=full.matrix.index, columns=full.matrix.columns)
-    m1_matrix = subset_matrix(movies, idx=None)
-    s2_matrix = subset_matrix(songs, idx=None)
-    #s2_matrix = Matrix(s2)
-    m2_zeros = Matrix(pd.DataFrame(0, index=s2_matrix.matrix.index, columns=m1_matrix.matrix.columns))
-    s1_zeros = Matrix(pd.DataFrame(0, index=m1_matrix.matrix.index, columns=s2_matrix.matrix.columns)) 
-    top_matrix = matrix_concat(m1_matrix, s1_zeros, axis=1)
-    bottom_matrix = matrix_concat(m2_zeros, s2_matrix, axis=1)
-    row = 0
-    for i in xrange(df_zeros.shape[0]):
-        if not i%2:
-            df_zeros.iloc[i] = top_matrix.matrix.iloc[row]
-        else:
-            df_zeros.iloc[i] = bottom_matrix.matrix.iloc[row]
-            row += 1
-    df_nan = pd.DataFrame(np.nan, index=full.matrix.index, columns=full.matrix.columns)
-    m2_nan = pd.DataFrame(np.nan, index=s2_matrix.matrix.index, columns=m1_matrix.matrix.columns)
-    s1_nan = pd.DataFrame(np.nan, index=m1_matrix.matrix.index, columns=s2_matrix.matrix.columns)
-    top_nan = pd.concat([m1_matrix.matrix, s1_nan], axis=1)
-    bottom_nan = pd.concat([m2_nan, s2_matrix.matrix], axis=1)
-    row = 0
-    for i in xrange(df_nan.shape[0]):
-        if not i%2:
-            df_nan.iloc[i] = top_nan.iloc[row]
-        else:
-            df_nan.iloc[i] = bottom_nan.iloc[row]
-            row += 1
-
-    #interleaved_nan = pd.concat([top_nan, bottom_nan])
-    interleaved_nan = df_nan
-    #interleaved_filled = SoftImpute().complete(interleaved_nan)
-    #interleaved_df = pd.DataFrame(interleaved_filled, index=full.matrix.index, columns=full.matrix.columns)
-    #i_leaved = Matrix(interleaved_df)
-    interleaved = Matrix(df_zeros)
-    interleaved_pred = PredictedMatrix(interleaved, interleaved)
+    
+    #test interleaved matrix
+    interleaved = build_interleaved_matrix(movies, songs, 'zero')
     test4 = Tester(full, interleaved)
-    test4.mse
-    #test5 = Tester(full, i_leaved)
     print test4.mse
     
     ids = [i for i in bd.index]
