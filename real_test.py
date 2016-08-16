@@ -165,7 +165,7 @@ def block_diagonal(m, s):
     '''
 
     idx = m.matrix.shape[0]/2
-    print idx
+    #print idx
     m1 = m.matrix[:idx].copy()
     m2 = m.matrix[idx:].copy()
     s1 = s.matrix[:idx].copy()
@@ -229,7 +229,58 @@ def build_interleaved_matrix(m, s, fill='zero'):
 
     df1 = pd.DataFrame(insert, index=a_locs, columns=cols)
     df2 = pd.DataFrame(insert2, index=b_locs, columns=cols)
-    return Matrix(pd.concat([df1, df2]).sort_index())    
+    return Matrix(pd.concat([df1, df2]).sort_index())   
+
+def get_melted(m):
+    ids = [i for i in m.index]
+    if 'id' not in m.columns:
+        m.insert(0, 'id', ids)
+    value_vars = [i for i in m.columns.values[1:]]
+    #print value_vars
+    return pd.melt(m, id_vars=['id'], value_vars=value_vars)
+
+def get_gl_preds(m, verbosity=False):
+    melted = get_melted(m)
+    full_sf = gl.SFrame(melted)
+    train_sf = gl.SFrame(melted.dropna())
+    gl_rec = gl.factorization_recommender.create(train_sf, user_id='id', item_id='variable', target='value', verbose=verbosity)
+    predictions = pd.DataFrame(np.array(gl_rec.predict(full_sf)), columns=['prediction'])
+    return predictions
+
+def get_gl_recommender(m, verbosity=False):
+    melted=get_melted(m)
+    return gl.factorization_recommender.create(gl.SFrame(melted), user_id='id', item_id='variable', target='value', verbose=verbosity)
+
+
+def get_coeffs(rec):
+    '''
+    Takes a graphlab recommender and returns:
+    user_intercept
+    user_factors
+    item_intercept
+    item_factors
+    intercept
+    '''
+    user_intercept = rec.coefficients['id']['linear_terms']
+    user_factors = rec.coefficients['id']['factors']
+    item_intercept = rec.coefficients['variable']['linear_terms']
+    item_factors = rec.coefficients['variable']['factors']
+    intercept = rec.coefficients['intercept']
+    return user_intercept, user_factors, item_intercept, item_factors, intercept
+
+def gl_predictor(user_rec, item_rec, user_id):
+    '''
+    Takes a graphlab recommender for the user domain and one for the item domain and the user id
+    returns a vector of the item predictions for the user
+    '''
+    user_intercept, user_factors, _, _, u_intercept = get_coeffs(user_rec)
+    _, _, item_intercept, item_factors, i_intercept = get_coeffs(item_rec)
+
+    mat = np.dot(np.array(user_factors), np.array(item_factors).T)
+    user_vec = mat[user_id] + item_intercept
+    user_vec = user_vec + user_intercept[user_id]
+    user_vec = user_vec + np.mean([u_intercept, i_intercept])
+    return user_vec
 
 
 
@@ -245,13 +296,11 @@ if __name__ == '__main__':
     song_predictions = PredictedMatrix(movies, songs)
     test = Tester(songs, song_predictions)
     print test.mse
-
     '''
     Find MSE of Block Diagonal NaN Matrix
     '''
     bd, bd_matrix, full = block_diagonal(movies, songs)
     
-    #print bd
     #bd_U, bd_s, bd_V = svd(bd.matrix, full_matrices=False)
     #bd_filled = NuclearNormMinimization().complete(bd)
     #bd_filled = SoftImpute().complete(bd)
@@ -275,157 +324,49 @@ if __name__ == '__main__':
     pred_s1 = PredictedMatrix(m1_matrix, s2_matrix)
     pred_full = build_full_predicted_matrix(m1_matrix, s2_matrix)
     test3 = Tester(full, pred_full)
-    #test3.mse
-
-    
     #test interleaved matrix
     interleaved = build_interleaved_matrix(movies, songs, 'zero')
     test4 = Tester(full, interleaved)
     print test4.mse
     
-    ids = [i for i in bd.index]
-    bd.insert(0, 'id', ids)
-    value_vars = [i for i in bd.columns.values[1:]]
-    a = pd.melt(bd, id_vars=['id'], value_vars=value_vars)
-
-    train_sf = gl.SFrame(a.dropna())
-    full_sf = gl.SFrame(a)
-
-    gl_rec = gl.factorization_recommender.create(train_sf, user_id = 'id', item_id='variable', target='value')
-
-    predictions = pd.DataFrame(np.array(gl_rec.predict(full_sf)), columns=['prediction'])
-    full_df = full.matrix
-    full_df.insert(0, 'id', ids)
-    full_melt = pd.melt(full_df, id_vars=['id'], value_vars=value_vars)
-    full_preds = pd.concat([full_melt, predictions], axis=1)
-
+    #test graphlab's predictions on block diagonal NaN matrix
+    gl_preds = get_gl_preds(bd)
+    full_melt = get_melted(full.matrix)
+    full_preds = pd.concat([full_melt, gl_preds], axis=1)
     error = np.mean(np.square(full_preds.eval('value-prediction')))
-
-
-    '''
-    updating factor loadings for new users
-    use avg of movie user factor loadings, get a movie rating,
-    find the 'rating' for that movie with out the first singular value
-    then solve for the user factor loading on the first sv that
-    reproduces the rating
-    '''
-
-    avgs = np.mean(movies.U, axis=0)
-    new_rating=5
-    position = 1 #4: The revenanat, 1: the martian
-    #reconstructed_ratings = np.dot(avgs[1:], np.dot(np.diag(movies.s[1:]), movies.V[1:]))
-    one_factor_rating = np.dot(movies.s[0], movies.V[0, position])
-    new_loading = new_rating/one_factor_rating
-    #x = movies.s[0]*movies.V[:,position][0]
-    #new_loading = (new_rating-reconstructed_ratings[position])/x
-    new_avgs = [a for a in avgs]
-    new_avgs[0] = new_loading
-    #new_song_ratings = np.dot(new_avgs, np.dot(np.diag(movies.s), songs.V))
-    #new_song_ratings_one_factor = np.dot(new_avgs[0], np.dot(np.diag(movies.s[0]), songs.V[0])
-    new_song_ratings = np.dot(new_avgs[0], np.dot(movies.s[0], songs.V[0]))
-    print new_song_ratings
-    new_song_preds = songs.items[np.argsort(new_song_ratings)[::-1]]
-    avg_song_ratings = np.dot(avgs, np.dot(np.diag(movies.s), songs.V))
-    avg_song_preds = songs.items[np.argsort(avg_song_ratings)[::-1]]
-    new_movie_ratings = np.dot(new_avgs, np.dot(np.diag(movies.s), movies.V))
-    avg_movie_ratings = np.dot(avgs, np.dot(np.diag(movies.s), movies.V))
-    avg_movie_preds = movies.items[np.argsort(avg_movie_ratings)[::-1]]
-    new_movie_preds = movies.items[np.argsort(new_movie_ratings)[::-1]]
-    print "avg preds {}".format(avg_movie_preds)
-    print "new_preds {}".format(new_movie_preds)
-    print "new songs {}".format(new_song_preds)
-    print 'avg songs {}'.format(avg_song_preds)
-    
     
     '''
     incorporate gl factors
     '''
-    eighties_songs = songs.matrix.iloc[:, 10:]
-    ids = [i for i in eighties_songs.index]
-    eighties_songs.insert(0, 'id', ids)
-    current_songs = songs.matrix.iloc[:, :10]
-    ids = [i for i in current_songs.index]
-    current_songs.insert(0, 'id', ids)
-    eighties_values = [a for a in eighties_songs.columns[1:]]
-    current_values = [a for a in current_songs.columns[1:]]
-    movies_df = movies.matrix
     
-    gl.SFrame(movies_df).save('data/flask_movies_sf')
-
-    ids = [i for i in movies_df.index]
-    movies_df.insert(0, 'id', ids)
-    movies_values = [a for a in movies_df.columns[1:]]
-
-    songs_df = songs.matrix
-    gl.SFrame(songs_df).save('data/flask_songs_sf')
-    #songs_sf.save('/data/flask_songs_sf')
-    ids = [i for i in songs_df.index]
-    songs_df.insert(0, 'id', ids)
-    songs_values = [a for a in songs_df.columns[1:]]
-    songs_melt = pd.melt(songs_df, id_vars='id', value_vars = songs_values)
-
     
 
-    eighties_melt = pd.melt(eighties_songs, id_vars=['id'], value_vars = eighties_values)
-    current_melt = pd.melt(current_songs, id_vars=['id'], value_vars = current_values)
-    movies_melt = pd.melt(movies_df, id_vars=['id'], value_vars=movies_values)
-    eighties_sf = gl.SFrame(eighties_melt)
-    current_sf = gl.SFrame(current_melt)
-    movies_sf = gl.SFrame(movies_melt)
-    songs_sf = gl.SFrame(songs_melt)
+    eighties_rec = get_gl_recommender(songs.matrix.iloc[:, 10:].copy())
+    current_rec = get_gl_recommender(songs.matrix.iloc[:, :10].copy())
+    songs_rec = get_gl_recommender(songs.matrix.copy())
+    movies_rec = get_gl_recommender(movies.matrix.copy())
+    #eighties_ui = eighties_rec.coefficients['id']['linear_terms']
+    #eighties_ufactors = eighties_rec.coefficients['id']['factors']
+    #eighties_ii = eighties_rec.coefficients['variable']['linear_terms']
+    #eighties_ifactors = eighties_rec.coefficients['variable']['factors']
+    #eighties_intercept = eighties_rec.coefficients['intercept']
 
-    eighties_rec = gl.factorization_recommender.create(eighties_sf, user_id='id', item_id='variable', target='value')
-    current_rec = gl.factorization_recommender.create(current_sf, user_id='id', item_id='variable', target='value')
-    movies_rec = gl.factorization_recommender.create(movies_sf, user_id='id', item_id='variable', target='value')
-    songs_rec = gl.factorization_recommender.create(songs_sf, user_id='id', item_id='variable', target='value')
-
-    eighties_ui = eighties_rec.coefficients['id']['linear_terms']
-    eighties_ufactors = eighties_rec.coefficients['id']['factors']
-    eighties_ii = eighties_rec.coefficients['variable']['linear_terms']
-    eighties_ifactors = eighties_rec.coefficients['variable']['factors']
-    eighties_intercept = eighties_rec.coefficients['intercept']
-
-    def get_coeffs(rec):
-        user_intercept = rec.coefficients['id']['linear_terms']
-        user_factors = rec.coefficients['id']['factors']
-        item_intercept = rec.coefficients['variable']['linear_terms']
-        item_factors = rec.coefficients['variable']['factors']
-        intercept = rec.coefficients['intercept']
-        return user_intercept, user_factors, item_intercept, item_factors, intercept
-
+    #eighties_ui, eighties_ufactors, eighties_ii, eighties_ifactors, eighties_intercept = get_coeffs(eighties_rec)
     song_ui, song_ufactors, song_ii, song_ifactors, song_i = get_coeffs(songs_rec)
     movie_ui, movie_ufactors, movie_ii, movies_ifactors, movie_i = get_coeffs(movies_rec)
 
-    comb = np.dot(np.array(movie_ufactors), np.array(song_ifactors).T)
-    a = comb[0]+song_ii
-    a = a + movie_ui[0]
-    a = a + np.mean([song_i, movie_i])
-    print songs.items[np.argsort(a)[::-1]]
-
-    def gl_predictor(user_rec, item_rec, user_id):
-        user_intercept, user_factors, _, _, u_intercept = get_coeffs(user_rec)
-        _, _, item_intercept, item_factors, i_intercept = get_coeffs(item_rec)
-
-        mat = np.dot(np.array(user_factors), np.array(item_factors).T)
-        user_vec = mat[user_id] + item_intercept
-        user_vec = user_vec + user_intercept[user_id]
-        user_vec = user_vec + np.mean([u_intercept, i_intercept])
-        return user_vec
 
 
 
+    
     '''
     code for clustering songs and movies
     '''
     movies_factors = movies.V.T
     songs_factors=songs.V.T
-    m_factor_df = pd.DataFrame(movies_factors, index=movies.items)
-    m_factor_df.rename(columns = lambda x: 'factor_'+str(x))
-    s_factor_df = pd.DataFrame(songs_factors, index=songs.items)
-    s_factor_df.rename(columns=lambda x: 'factor_'+str(x))
+    m_factor_df = pd.DataFrame(movies_factors, index=movies.items).rename(columns=lambda x: 'factor_'+str(x))
+    s_factor_df = pd.DataFrame(songs_factors, index=songs.items).rename(columns=lambda x: 'factor_'+str(x))
     cluster_df = pd.concat([m_factor_df, s_factor_df])
-    #with open('data/cluster_df.pkl', 'w') as f:
-    #    pickle.dump(cluster_df, f)
     cluster_df.to_pickle('data/cluster_df.pkl') #for flask_app to read
     n_clusters = 4
     clust = AC(affinity='cosine', n_clusters=n_clusters, linkage='average')
@@ -449,8 +390,8 @@ if __name__ == '__main__':
             
     km = KMeans(n_clusters = 3)
     km.fit(cluster_df)
-    movies_mean_df = pd.DataFrame(np.mean(movies.matrix.ix[:, 1:]))
-    songs_mean_df = pd.DataFrame(np.mean(songs.matrix.ix[:, 1:]))
+    movies_mean_df = pd.DataFrame(np.mean(movies.matrix.copy()))
+    songs_mean_df = pd.DataFrame(np.mean(songs.matrix.copy()))
     mean_ratings = pd.concat([movies_mean_df, songs_mean_df]).rename(columns={0:'rating'})
     mean_ratings['cluster'] = km.labels_
     cluster_list = {}
