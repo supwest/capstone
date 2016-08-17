@@ -55,13 +55,11 @@ song_titles_dict = {'bad_blood':['Bad Blood', 'Taylor Swift',''],
 
 
 def get_movies(song):
-    #return str(song)
     song_dict = {'bad_blood':0, 'stressed_out':1, 'panda':5, 'rock_me_amadeus':10, 'dont_let_me_down':2, 'hotline_bling':3, 'hands_to_myself':4, 'work_from_home':6, 'trap_queen':7, 'sorry':8, 'fancy':9, 'come_on_eileen':11, 'when_doves_cry':12, 'sweet_child_o_mine':13, 'billie_jean':14, 'every_breath_you_take':15, 'call_me':16, 'another_one_bites_the_dust':17, 'centerfold':18, 'lets_dance':19}
     path_to_movie_pickle='/home/cully/Documents/capstone/data/movie_titles.pkl'
     path_to_sim_pickle='/home/cully/Documents/capstone/data/similarity.pkl'
     with open(path_to_movie_pickle) as f:
         movie_titles = pickle.load(f)
-    #movies_titles = pickle.load(path_to_movie_pickle)
     with open(path_to_sim_pickle) as f:
         similarity = pickle.load(f)
     images_dict = {'The Lego Movie': 'https://upload.wikimedia.org/wikipedia/en/1/10/The_Lego_Movie_poster.jpg', 
@@ -75,7 +73,6 @@ def get_movies(song):
                 'The Revenant':'https://upload.wikimedia.org/wikipedia/en/b/b6/The_Revenant_2015_film_poster.jpg',
                 'Star Wars The Force Awakens': 'https://upload.wikimedia.org/wikipedia/en/a/a2/Star_Wars_The_Force_Awakens_Theatrical_Poster.jpg'
                 }
-    #similarity = pickle.load(path_to_sim_pickle)
     movies_list = movie_titles[np.argsort(similarity[song_dict[song]])]
     images_list = [images_dict[movie] for movie in movies_list]
     
@@ -114,6 +111,12 @@ def get_rec_coeffs(rec):
     return user_intercept, user_factors, item_intercept, item_factors, intercept
 
 def get_song_recs(ratings, n_features):
+
+    '''
+    Takes user new movie ratings from website user and returns 
+    recommended song titles
+    '''
+
     path_to_songs_sf = '/home/cully/Documents/capstone/data/flask_songs_sf'
     path_to_movies_sf = '/home/cully/Documents/capstone/data/flask_movies_sf'
     songs_sf = gl.load_sframe(path_to_songs_sf)
@@ -129,26 +132,17 @@ def get_song_recs(ratings, n_features):
     movies_df = movies_sf.to_dataframe()
     
     value_vars = [x for x in movies_df.columns if x != 'id']
-    #new_ratings = [int(x) if x != '9' else np.nan for x in ratings]
 
     new_ratings = {movie_dict[name]:int(ratings[name]) for name in ratings}
     new_df = pd.DataFrame.from_dict([new_ratings], orient='columns').replace(-1,np.nan)
-    #new_ratings = np.array(new_ratings).reshape(10,1)
-    #new_df = pd.DataFrame([new_ratings], dtype='float')
-    #new_df.columns = movies_df.columns
     movies_df = pd.concat([movies_df, new_df]).reset_index(drop=True)
     ids = [str(i) for i in movies_df.index]
-    #if 'id' not in songs_df.columns:
     movies_df.insert(0, 'id', ids)
     movies_melted = gl.SFrame(pd.melt(movies_df, id_vars='id', value_vars=value_vars)).dropna()
     movies_rec = gl.factorization_recommender.create(movies_melted, user_id='id', item_id='variable', target='value', num_factors=n_features)
     movies_user_intercept, movies_user_factors, _, _, movies_intercept = get_rec_coeffs(movies_rec)
     comb = np.dot(np.array(movies_user_factors)[-1], np.array(songs_item_factors).T)
-    #comb = comb + songs_item_intercept
-    #comb = comb + movies_user_intercept[-1]
-    #comb = comb + np.mean([movies_intercept, songs_intercept])
     return songs_df.columns[1:][np.argsort(comb)[::-1]]
-    #return comb
 
 def get_wine_recs(ratings):
     path_to_movies = '/home/cully/Documents/capstone/data/flask_movies_sf'
@@ -165,7 +159,6 @@ def get_wine_recs(ratings):
     movies_melted = gl.SFrame(pd.melt(movies_df, id_vars='id', value_vars=value_vars)).dropna()
     movies_rec = gl.factorization_recommender.create(movies_melted, user_id = 'id', item_id='variable', target='value')
     movies_user_intercept, movies_user_factors, _, _, movies_intercept = get_rec_coeffs(movies_rec)
-    #_, _, wine_item_intercept, wine_item_factors, wine_intercept = get_rec_coeffs(wine_rec)
     wine_item_factors = np.array(wine_rec.coefficients['wine_name']['factors'])[:,:8]
     wine_names = np.array(wine_rec.coefficients['wine_name']['wine_name'])
     comb = np.dot(np.array(movies_user_factors[-1]), wine_item_factors.T)
@@ -178,7 +171,6 @@ def get_wines_for_movie(movie):
     wine_rec = gl.load_model(path_to_wine)
     movies_sf = gl.load_sframe(path_to_movies)
     cols = movies_sf.column_names()
-    #movies_sf = movies_sf.add_row_number()
     movies_df = movies_sf.to_dataframe()
     ids = [i for i in movies_df.index]
     movies_df.insert(0, 'id', ids)
@@ -194,10 +186,6 @@ def get_wines_for_movie(movie):
 def get_data():
     with open('static/clusters.json', 'r') as f:
         g = f.read()
-    #graph_dict = json.loads('static/clusters.json')
-    #RESULTS = {'children': []}
-    #for k in graph_dict:
-    #    RESULTS['children'].append({graph_dict[k]})
     return g
 
 def get_data_2():
@@ -242,13 +230,8 @@ def movie_song_recs():
 def get_updated_song_recs():
     if request.method == 'POST':
         ratings = ({m:request.form[m] for m in movie_dict})
-        #n_features = request.form['n_features']
         n_features = 8
         recommendations = get_song_recs(ratings, n_features)
-        #ratings = {}
-        #for m in movie_list:
-        #    ratings[m] = (request.form[m])
-        #recommendations = get_song_recommendations(rating)
         return render_template('get_song_recs_2.html', songs=recommendations[:5])
     return render_template('get_song2.html', movies=movie_dict, n_feats = [n+1 for n in xrange(8)], nums = [str(n) for n in xrange(8)])
 
@@ -285,20 +268,11 @@ def get_wine_2():
 
 @app.route('/clusters')
 def show_clusters():
-    #cluster_df = pd.read_pickle('/home/cully/Documents/capstone/data/cluster_df.pkl')
-    #clust = AC(n_clusters=4, affinity='cosine', linkage='average')
-    #clusters=clust.fit(cluster_df)
-    j = {}
-    #for x in xrange(4):
-    #    j[x] = cluster_df.index[clusters.labels_==x]
-    #    print cluster_df.index[clusters.labels_==x]
-    #json.dumps(j)
     return render_template('clusters.html')
 
 @app.route('/data')
 def data():
     return get_data()
-    #return jsonify(get_data())
 
 @app.route('/clusters2')
 def show_clusters2():
@@ -307,5 +281,6 @@ def show_clusters2():
 @app.route('/data2')
 def data_2():
     return get_data_2()
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8000, debug=True, threaded=True)

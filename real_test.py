@@ -236,7 +236,6 @@ def get_melted(m):
     if 'id' not in m.columns:
         m.insert(0, 'id', ids)
     value_vars = [i for i in m.columns.values[1:]]
-    #print value_vars
     return pd.melt(m, id_vars=['id'], value_vars=value_vars)
 
 def get_gl_preds(m, verbosity=False):
@@ -324,6 +323,7 @@ if __name__ == '__main__':
     pred_s1 = PredictedMatrix(m1_matrix, s2_matrix)
     pred_full = build_full_predicted_matrix(m1_matrix, s2_matrix)
     test3 = Tester(full, pred_full)
+
     #test interleaved matrix
     interleaved = build_interleaved_matrix(movies, songs, 'zero')
     test4 = Tester(full, interleaved)
